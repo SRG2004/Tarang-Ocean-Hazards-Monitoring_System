@@ -1,0 +1,68 @@
+I want you to build a full software solution that supports INCOIS's ocean hazard reporting and monitoring system exactly as described below. The goal is a fully working mobile and web platform, deployed and production-ready, with all specifications implemented.
+
+Please first carefully review the existing code files I am providing. Identify and fix any errors or gaps in those files. Use them as the foundation to complete the entire project as per the detailed requirements below.
+
+Problem Statement
+India’s vast coastline is vulnerable to ocean hazards such as tsunamis, storm surges, high waves, coastal currents, and abnormal sea behavior. INCOIS currently provides early warnings but lacks real-time field reporting from citizens and social media data integration.
+
+Requirements
+Unified Reporting Platform (Mobile + Web)
+
+User registration and login with Firebase Authentication.
+
+Role-based access control: Citizens, Volunteers, Officials, Analysts.
+
+Citizens can submit geotagged reports with photos/videos for ocean hazards (e.g., unusual tides, flooding, tsunami, swell surges, high waves).
+
+Volunteers and Officials can manage resources and monitor reports.
+
+Enable offline report data collection with sync capabilities later for remote areas.
+
+Dashboard & Visualization
+
+Interactive map showing live crowdsourced hazard reports with dynamic hotspot generation based on report density.
+
+Visualize social media trends and sentiment extracted via API integrations from Twitter, public Facebook posts, and YouTube comments using NLP/text classification models.
+
+Filters for location, event type, date, and data source for situational awareness.
+
+Real-time updates and alerts for officials and volunteers.
+
+Backend & APIs
+
+Robust backend database using Firestore or Firebase Realtime Database to manage reports, user roles, media uploads, and metadata.
+
+RESTful APIs supporting social media feed ingestion with NLP to extract hazard-relevant information and trends.
+
+Donation management system integrated into the platform for funding and resource allocation.
+
+Volunteer and resource management features (task assignments, availability tracking).
+
+Technology & Deployment
+
+Mobile app built with React Native, fully working on Android (APK included).
+
+Web app developed with React.js for desktop use.
+
+Firebase integration for Authentication, Firestore, and cloud storage for media.
+
+API integration for social media platforms using their official APIs.
+
+Multilingual support (include at least English and regional languages).
+
+Deployment scripts and CI/CD for web and mobile app stores.
+
+Deliverables
+Fully functional, production-ready mobile and web apps.
+
+Source code with detailed documentation.
+
+APK file for Android app deployment.
+
+Deployment completed on Firebase (or recommended cloud service) with instructions.
+
+User manuals and admin guides.
+
+Testing scripts and test reports.
+
+Please use my existing code files as the starting point, fix any errors, and fully complete the project end-to-end including deployment and documentation. Ensure the solution meets all requirements and is scalable, secure, and user-friendly for coastal community citizens and disaster management authorities
