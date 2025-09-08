@@ -248,12 +248,6 @@ const HomePage = () => {
             <div className="cta-buttons">
               <button 
                 className="cta-button primary"
-                onClick={() => navigate('/register')}
-              >
-                👤 User Registration
-              </button>
-              <button 
-                className="cta-button secondary"
                 onClick={() => navigate('/volunteer-registration')}
               >
                 🤝 Volunteer Registration

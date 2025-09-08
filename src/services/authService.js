@@ -22,23 +22,14 @@ const DEMO_ACCOUNTS = {
     location: { state: 'Kerala', district: 'Kochi', coastalArea: 'Fort Kochi' },
     permissions: ['analytics', 'reports', 'social_media']
   },
-  'officer@oceanhazard.com': {
-    id: 'demo_officer',
-    email: 'officer@oceanhazard.com', 
-    fullName: 'Emergency Officer',
+  'official@oceanhazard.com': {
+    id: 'demo_official',
+    email: 'official@oceanhazard.com', 
+    fullName: 'Emergency Official',
     role: 'official',
     phone: '+91 9876543212',
     location: { state: 'Gujarat', district: 'Surat', coastalArea: 'Dumas Beach' },
-    permissions: ['emergency', 'coordination', 'reports']
-  },
-  'volunteer@oceanhazard.com': {
-    id: 'demo_volunteer',
-    email: 'volunteer@oceanhazard.com',
-    fullName: 'Volunteer User', 
-    role: 'volunteer',
-    phone: '+91 9876543213',
-    location: { state: 'Odisha', district: 'Puri', coastalArea: 'Puri Beach' },
-    permissions: ['volunteer_tasks', 'reports']
+    permissions: ['official', 'donations', 'reports', 'alerts']
   },
   'citizen@oceanhazard.com': {
     id: 'demo_citizen',
@@ -91,14 +82,12 @@ export const authService = {
   // Get role permissions
   getRolePermissions(role) {
     const permissions = {
-      admin: ['all'],
-      analyst: ['analytics', 'reports', 'social_media'],
-      official: ['emergency', 'coordination', 'reports'],
-      volunteer: ['volunteer_tasks', 'reports'],
-      citizen: ['reports', 'alerts'],
-      researcher: ['research', 'analytics', 'reports']
+      admin: ['all', 'analytics', 'official', 'social_media', 'donations', 'reports', 'alerts'],
+      analyst: ['analytics', 'social_media', 'reports', 'alerts'],
+      official: ['official', 'donations', 'reports', 'alerts'],
+      citizen: ['reports', 'alerts']
     };
-    return permissions[role] || ['reports'];
+    return permissions[role] || ['reports', 'alerts'];
   },
 
   // Login user

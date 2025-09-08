@@ -39,7 +39,7 @@ const VolunteerRegistration = () => {
             >
               ← Back to Home
             </button>
-            <h1 className="registration-title">Citizen Registration</h1>
+            <h1 className="registration-title">Volunteer Registration</h1>
             <p className="registration-subtitle">
               Join our community of ocean hazard response volunteers
             </p>
