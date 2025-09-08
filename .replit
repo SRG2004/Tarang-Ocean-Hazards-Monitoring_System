@@ -10,9 +10,10 @@ channel = "stable-25_05"
 language = "nodejs"
 
 [deployment]
-deploymentTarget = "static"
+deploymentTarget = "vm"
 build = ["npm", "run", "build"]
 publicDir = "dist"
+run = ["bash", "-c", "npm run build && (PORT=3001 NODE_ENV=production node server.js &) && npm run preview"]
 
 [[ports]]
 localPort = 5000
