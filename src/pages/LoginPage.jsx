@@ -30,17 +30,10 @@ const LoginPage = () => {
       password: 'demo123'
     },
     {
-      type: 'Emergency Officer',
-      email: 'officer@oceanhazard.com',
+      type: 'Official',
+      email: 'official@oceanhazard.com',
       description: 'Emergency response & coordination',
       icon: '🛡️',
-      password: 'demo123'
-    },
-    {
-      type: 'Volunteer',
-      email: 'volunteer@oceanhazard.com',
-      description: 'Volunteer tasks & community support',
-      icon: '🤝',
       password: 'demo123'
     },
     {
