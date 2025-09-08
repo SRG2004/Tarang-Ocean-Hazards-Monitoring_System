@@ -63,7 +63,7 @@ const LoginPage = () => {
       } else if (result.user.role === 'analyst') {
         navigate('/analyst'); // Analyst can access citizen and analyst dashboard
       } else if (result.user.role === 'official') {
-        navigate('/official'); // Official can access official and citizen dashboard
+        navigate('/donations'); // Official can access official and citizen dashboard
       } else {
         navigate('/citizen'); // Citizens can only access citizen dashboard
       }
@@ -100,7 +100,7 @@ const LoginPage = () => {
       if (result.user.role === 'admin' || result.user.role === 'analyst') {
         navigate('/analyst');
       } else if (result.user.role === 'official') {
-        navigate('/citizen');
+        navigate('/donations');
       } else if (result.user.role === 'volunteer') {
         navigate('/volunteer-registration');
       } else {

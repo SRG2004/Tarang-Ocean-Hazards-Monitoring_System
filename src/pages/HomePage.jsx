@@ -1,9 +1,27 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useApp } from '../contexts/AppContext';
 import './HomePage.css';
 
 const HomePage = () => {
   const navigate = useNavigate();
+  const { user, isAuthenticated } = useApp();
+
+  // Redirect authenticated users to their appropriate dashboard
+  useEffect(() => {
+    if (isAuthenticated && user) {
+      // Redirect based on user role
+      if (user.role === 'admin' || user.role === 'analyst') {
+        navigate('/analyst');
+      } else if (user.role === 'official') {
+        navigate('/donations');
+      } else if (user.role === 'volunteer') {
+        navigate('/volunteer-registration');
+      } else {
+        navigate('/citizen');
+      }
+    }
+  }, [isAuthenticated, user, navigate]);
 
   const quickActions = [
     {
