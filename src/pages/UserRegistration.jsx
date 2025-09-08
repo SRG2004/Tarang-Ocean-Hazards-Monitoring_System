@@ -91,17 +91,8 @@ const UserRegistration = () => {
         status: 'active'
       });
       
-      // Redirect based on role
-      switch (formData.role) {
-        case 'analyst':
-          navigate('/analyst');
-          break;
-        case 'official':
-          navigate('/login'); // Officials need approval
-          break;
-        default:
-          navigate('/citizen');
-      }
+      // Redirect all users to homepage after registration
+      navigate('/');
     } catch (error) {
       setErrors({ submit: error.message });
     } finally {

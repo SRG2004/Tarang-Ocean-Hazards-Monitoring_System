@@ -284,7 +284,7 @@ export const AppProvider = ({ children }) => {
     try {
       const result = await hazardReportService.submitReport({
         ...reportData,
-        userId: state.user?.uid
+        userId: state.user?.uid || state.user?.id
       });
       dispatch({ type: ActionTypes.ADD_REPORT, payload: result.data });
       dispatch({ type: ActionTypes.SET_SUCCESS_MESSAGE, payload: 'Report submitted successfully!' });
@@ -331,7 +331,7 @@ export const AppProvider = ({ children }) => {
     try {
       const result = await donationService.processDonation({
         ...donationData,
-        userId: state.user?.uid
+        userId: state.user?.uid || state.user?.id
       });
       dispatch({ type: ActionTypes.ADD_DONATION, payload: result.data });
       dispatch({ type: ActionTypes.SET_SUCCESS_MESSAGE, payload: 'Donation processed successfully!' });
@@ -366,7 +366,7 @@ export const AppProvider = ({ children }) => {
     try {
       const result = await volunteerService.registerVolunteer({
         ...volunteerData,
-        userId: state.user?.uid
+        userId: state.user?.uid || state.user?.id
       });
       dispatch({ type: ActionTypes.ADD_VOLUNTEER, payload: result.data });
       dispatch({ type: ActionTypes.SET_SUCCESS_MESSAGE, payload: 'Volunteer registration successful!' });
@@ -386,7 +386,9 @@ export const AppProvider = ({ children }) => {
   useEffect(() => {
     const unsubscribe = authService.onAuthStateChange(async (user) => {
       if (user) {
-        const userData = await authService.getUserData(user.uid);
+        // Handle both uid (Firebase) and id (demo accounts)
+        const userId = user.uid || user.id;
+        const userData = await authService.getUserData(userId);
         dispatch({ type: ActionTypes.SET_USER, payload: { ...user, ...userData } });
       } else {
         dispatch({ type: ActionTypes.SET_USER, payload: null });
