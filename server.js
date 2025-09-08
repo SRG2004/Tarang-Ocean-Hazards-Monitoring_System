@@ -50,7 +50,7 @@ const io = new Server(server, {
   }
 });
 
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 3001;
 
 /**
  * Security and Performance Middleware
@@ -247,7 +247,7 @@ const startServer = async () => {
     console.log('✅ Automated alert system started');
     
     // Start server
-    server.listen(PORT, '0.0.0.0', () => {
+    server.listen(PORT, 'localhost', () => {
       console.log(`🌊 Taranga Ocean Hazard Monitor Server running on port ${PORT}`);
       console.log(`📡 Real-time WebSocket server active`);
       console.log(`🔒 Security middleware enabled`);
