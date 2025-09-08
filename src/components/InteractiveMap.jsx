@@ -261,7 +261,7 @@ const InteractiveMap = ({
           />
 
           {/* Hazard Reports */}
-          {selectedLayers.reports && reports.map((report) => (
+          {selectedLayers.reports && reports.filter(report => report.coordinates && report.coordinates.lat && report.coordinates.lng).map((report) => (
             <Marker
               key={report.id}
               position={[report.coordinates.lat, report.coordinates.lng]}
@@ -289,7 +289,7 @@ const InteractiveMap = ({
           ))}
 
           {/* Alert Zones */}
-          {selectedLayers.alerts && alerts.map((alert) => (
+          {selectedLayers.alerts && alerts.filter(alert => alert.coordinates && alert.coordinates.lat && alert.coordinates.lng).map((alert) => (
             <Circle
               key={alert.id}
               center={[alert.coordinates.lat, alert.coordinates.lng]}
