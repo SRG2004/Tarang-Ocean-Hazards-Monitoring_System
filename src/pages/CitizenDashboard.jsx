@@ -350,7 +350,6 @@ const CitizenDashboard = () => {
           onSuccess={handleReportSuccess}
         />
       )}
-      </main>
     </div>
   );
 };

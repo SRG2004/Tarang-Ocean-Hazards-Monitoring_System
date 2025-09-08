@@ -1,51 +1,79 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { hazardReportService } from '../services/hazardReportService';
+import { socialMediaService } from '../services/socialMediaService';
 import './AnalyticsDashboard.css';
 
 const AnalyticsDashboard = () => {
   const navigate = useNavigate();
+  const [loading, setLoading] = useState(true);
+  const [realTimeData, setRealTimeData] = useState({
+    totalReports: 0,
+    activeVolunteers: 0,
+    activeAlerts: 0,
+    socialMediaPosts: 0,
+    negativeSentiment: 0,
+    highRelevance: 0,
+    trendingTopics: 0
+  });
+  const [socialMediaStats, setSocialMediaStats] = useState({});
+  const [trendingTopics, setTrendingTopics] = useState([]);
+  const [recentReports, setRecentReports] = useState([]);
+  const [socialMediaPosts, setSocialMediaPosts] = useState([]);
 
-  const statsCards = [
-    { title: 'Total Reports', value: '127', change: '+12% from last month', color: '#10b981' },
-    { title: 'Active Volunteers', value: '89', change: '+8% from last month', color: '#3b82f6' },
-    { title: 'Active Alerts', value: '12', change: '+5% from last month', color: '#f59e0b' }
-  ];
+  // Load data on component mount
+  useEffect(() => {
+    loadAnalyticsData();
+  }, []);
 
-  const socialMediaStats = [
-    { title: 'Total Posts Monitored', value: '6', color: '#6366f1' },
-    { title: 'Negative Sentiment', value: '4', color: '#ef4444' },
-    { title: 'High Relevance', value: '4', color: '#f59e0b' },
-    { title: 'Trending Topics', value: '5', color: '#10b981' }
-  ];
-
-  const trendingTopics = [
-    { name: 'cyclone', posts: '3 posts', sentiment: 'negative' },
-    { name: 'Bay of Bengal', posts: '2 posts', sentiment: 'neutral' },
-    { name: 'IMD', posts: '2 posts', sentiment: 'negative' },
-    { name: 'alert', posts: '2 posts', sentiment: 'negative' },
-    { name: 'high waves', posts: '2 posts', sentiment: 'negative' }
-  ];
-
-  const highImpactPosts = [
-    {
-      source: '@IndiaMetDept',
-      content: 'IMD issues cyclone warning for Bay of Bengal. Fishermen advised to return to shore immediately. #CycloneAlert #BayOfBengal',
-      sentiment: 'negative',
-      relevance: '98%'
-    },
-    {
-      source: '@TheHindu',
-      content: 'Cyclone Alert: IMD Issues Warning for East Coast Indian Meteorological Department has issued a cyclone warning for the east coast. Fishermen advised...',
-      sentiment: 'negative',
-      relevance: '89%'
-    },
-    {
-      source: '@ChennaiWeatherLive',
-      content: 'High waves reported at Chennai Marina Beach. Coast Guard advisory issued for fishing vessels. Wave height: 3.5m #ChennaiWeather #MarineAlert',
-      sentiment: 'negative',
-      relevance: '83%'
+  const loadAnalyticsData = async () => {
+    setLoading(true);
+    try {
+      // Load hazard reports data
+      const reportsPromise = hazardReportService.getReports({ limit: 50 });
+      
+      // Load social media data
+      const socialDataPromise = socialMediaService.fetchSimulatedSocialMediaData();
+      const trendingPromise = socialMediaService.getSimulatedTrendingTopics(10);
+      const sentimentPromise = socialMediaService.getSimulatedSentimentStats();
+      
+      const [reports, socialPosts, trending, sentimentStats] = await Promise.all([
+        reportsPromise,
+        socialDataPromise,
+        trendingPromise,
+        sentimentPromise
+      ]);
+      
+      // Process reports data
+      setRecentReports(reports.slice(0, 10));
+      
+      // Calculate analytics from real data
+      const analyticsData = {
+        totalReports: reports.length,
+        activeVolunteers: Math.floor(reports.length * 0.7), // Simulated based on reports
+        activeAlerts: reports.filter(r => r.severity === 'critical' || r.severity === 'high').length,
+        socialMediaPosts: socialPosts.length,
+        negativeSentiment: sentimentStats.negative || 0,
+        highRelevance: socialPosts.filter(p => p.isHazardRelated).length,
+        trendingTopics: trending.length
+      };
+      
+      setRealTimeData(analyticsData);
+      setSocialMediaStats(sentimentStats);
+      setTrendingTopics(trending);
+      setSocialMediaPosts(socialPosts.slice(0, 5));
+      
+    } catch (error) {
+      console.error('Error loading analytics data:', error);
+      // Keep default/fallback data on error
+    } finally {
+      setLoading(false);
     }
-  ];
+  };
+
+  const refreshData = () => {
+    loadAnalyticsData();
+  };
 
   const hazardTrends = [
     { type: 'Tsunami', incidents: '15 incidents', trend: 'up', status: '7up' },
@@ -99,6 +127,13 @@ const AnalyticsDashboard = () => {
             >
               🏠 Home
             </button>
+            <button 
+              className="header-button"
+              onClick={refreshData}
+              disabled={loading}
+            >
+              {loading ? '🔄 Refreshing...' : '🔄 Refresh Data'}
+            </button>
             <button className="header-button">📄 Generate Report</button>
             <button className="header-button">📊 Export Data</button>
           </div>
@@ -109,15 +144,27 @@ const AnalyticsDashboard = () => {
         {/* Stats Overview */}
         <section className="stats-overview">
           <div className="stats-grid">
-            {statsCards.map((stat, index) => (
-              <div key={index} className="stat-card">
-                <div className="stat-value" style={{ color: stat.color }}>
-                  {stat.value}
-                </div>
-                <div className="stat-title">{stat.title}</div>
-                <div className="stat-change">{stat.change}</div>
+            <div className="stat-card">
+              <div className="stat-value" style={{ color: '#10b981' }}>
+                {loading ? '...' : realTimeData.totalReports}
               </div>
-            ))}
+              <div className="stat-title">Total Reports</div>
+              <div className="stat-change">From Firebase Database</div>
+            </div>
+            <div className="stat-card">
+              <div className="stat-value" style={{ color: '#f59e0b' }}>
+                {loading ? '...' : realTimeData.activeAlerts}
+              </div>
+              <div className="stat-title">Active Alerts</div>
+              <div className="stat-change">High/Critical Severity</div>
+            </div>
+            <div className="stat-card">
+              <div className="stat-value" style={{ color: '#3b82f6' }}>
+                {loading ? '...' : realTimeData.socialMediaPosts}
+              </div>
+              <div className="stat-title">Social Media Posts</div>
+              <div className="stat-change">Monitored Today</div>
+            </div>
           </div>
         </section>
 
@@ -134,14 +181,30 @@ const AnalyticsDashboard = () => {
           </div>
           
           <div className="social-stats-grid">
-            {socialMediaStats.map((stat, index) => (
-              <div key={index} className="social-stat-card">
-                <div className="social-stat-value" style={{ color: stat.color }}>
-                  {stat.value}
-                </div>
-                <div className="social-stat-title">{stat.title}</div>
+            <div className="social-stat-card">
+              <div className="social-stat-value" style={{ color: '#6366f1' }}>
+                {loading ? '...' : realTimeData.socialMediaPosts}
               </div>
-            ))}
+              <div className="social-stat-title">Total Posts Monitored</div>
+            </div>
+            <div className="social-stat-card">
+              <div className="social-stat-value" style={{ color: '#ef4444' }}>
+                {loading ? '...' : socialMediaStats.negative || 0}
+              </div>
+              <div className="social-stat-title">Negative Sentiment</div>
+            </div>
+            <div className="social-stat-card">
+              <div className="social-stat-value" style={{ color: '#f59e0b' }}>
+                {loading ? '...' : realTimeData.highRelevance}
+              </div>
+              <div className="social-stat-title">High Relevance</div>
+            </div>
+            <div className="social-stat-card">
+              <div className="social-stat-value" style={{ color: '#10b981' }}>
+                {loading ? '...' : trendingTopics.length}
+              </div>
+              <div className="social-stat-title">Trending Topics</div>
+            </div>
           </div>
 
           <div className="social-content">
@@ -163,17 +226,23 @@ const AnalyticsDashboard = () => {
             <div className="high-impact-posts">
               <h3 className="subsection-title">📈 Recent High-Impact Posts</h3>
               <div className="posts-list">
-                {highImpactPosts.map((post, index) => (
-                  <div key={index} className="post-item">
-                    <div className="post-source">{post.source}</div>
-                    <div className="post-content">{post.content}</div>
-                    <div className="post-meta">
-                      <span className={`post-sentiment ${post.sentiment}`}>
-                        {post.sentiment.toUpperCase()} • {post.relevance}
-                      </span>
+                {loading ? (
+                  <div className="loading-state">Loading social media data...</div>
+                ) : socialMediaPosts.length === 0 ? (
+                  <div className="empty-state">No high-impact posts found</div>
+                ) : (
+                  socialMediaPosts.map((post, index) => (
+                    <div key={index} className="post-item">
+                      <div className="post-source">{post.author}</div>
+                      <div className="post-content">{post.content}</div>
+                      <div className="post-meta">
+                        <span className={`post-sentiment ${post.sentiment.label}`}>
+                          {post.sentiment.label.toUpperCase()} • {post.platform}
+                        </span>
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  ))
+                )}
               </div>
             </div>
           </div>
