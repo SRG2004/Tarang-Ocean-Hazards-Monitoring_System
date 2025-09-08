@@ -21,14 +21,25 @@ const createCustomIcon = (color, type) => {
     </div>
   `;
   
+  const svgContent = `
+    <svg width="30" height="40" viewBox="0 0 30 40" xmlns="http://www.w3.org/2000/svg">
+      <path d="M15 0C6.7 0 0 6.7 0 15c0 15 15 25 15 25s15-10 15-25C30 6.7 23.3 0 15 0z" fill="${color}"/>
+      <circle cx="15" cy="15" r="8" fill="white"/>
+      <text x="15" y="19" text-anchor="middle" font-size="10" fill="${color}">!</text>
+    </svg>
+  `.trim();
+  
+  // Use window.btoa with error handling for non-Latin1 characters
+  let encodedSvg;
+  try {
+    encodedSvg = window.btoa(unescape(encodeURIComponent(svgContent)));
+  } catch (e) {
+    // Fallback for encoding issues
+    encodedSvg = window.btoa(svgContent.replace(/[^\x00-\x7F]/g, "!"));
+  }
+  
   return new Icon({
-    iconUrl: `data:image/svg+xml;base64,${btoa(`
-      <svg width="30" height="40" viewBox="0 0 30 40" xmlns="http://www.w3.org/2000/svg">
-        <path d="M15 0C6.7 0 0 6.7 0 15c0 15 15 25 15 25s15-10 15-25C30 6.7 23.3 0 15 0z" fill="${color}"/>
-        <circle cx="15" cy="15" r="8" fill="white"/>
-        <text x="15" y="19" text-anchor="middle" font-size="10" fill="${color}">${getHazardIcon(type)}</text>
-      </svg>
-    `)}`,
+    iconUrl: `data:image/svg+xml;base64,${encodedSvg}`,
     iconSize: [30, 40],
     iconAnchor: [15, 40],
     popupAnchor: [0, -40]

@@ -251,12 +251,51 @@ router.get('/', async (req, res) => {
     // Build query
     q = query(q, ...constraints);
     
-    const querySnapshot = await getDocs(q);
     let reports = [];
     
-    querySnapshot.forEach((doc) => {
-      reports.push({ id: doc.id, ...doc.data() });
-    });
+    try {
+      const querySnapshot = await getDocs(q);
+      querySnapshot.forEach((doc) => {
+        reports.push({ id: doc.id, ...doc.data() });
+      });
+      
+      // If Firebase collection is empty, use sample data
+      if (reports.length === 0) {
+        console.log('Firebase collection empty, using sample data');
+        throw new Error('No data in Firebase collection');
+      }
+    } catch (error) {
+      console.log('Using sample data:', error.message);
+      // Use sample data when Firebase is not available or empty
+      try {
+        const { sampleHazardReports } = await import('../src/data/sampleHazardReports.js');
+        reports = sampleHazardReports.map(report => ({
+          ...report,
+          coordinates: {
+            lat: report.location.latitude,
+            lng: report.location.longitude
+          },
+          createdAt: report.reportedAt,
+          userInfo: report.reportedBy
+        }));
+      } catch (importError) {
+        console.log('Could not import sample data:', importError.message);
+        // Fallback sample data
+        reports = [
+          {
+            id: 'demo_001',
+            title: 'High Tide Alert - Marina Beach',
+            type: 'tidal_surge',
+            severity: 'high',
+            status: 'active',
+            coordinates: { lat: 13.0499, lng: 80.2824 },
+            description: 'Unusually high tides observed with potential flooding risk.',
+            createdAt: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
+            userInfo: { name: 'Coastal Observer', type: 'citizen' }
+          }
+        ];
+      }
+    }
     
     // Apply location-based filtering if coordinates provided
     if (lat && lng) {

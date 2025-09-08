@@ -26,6 +26,59 @@ import { firestore } from '../config/database.js';
 
 const router = express.Router();
 
+// Demo accounts for testing
+const DEMO_ACCOUNTS = {
+  'admin@oceanhazard.com': {
+    id: 'demo_admin',
+    email: 'admin@oceanhazard.com',
+    fullName: 'Admin User',
+    role: 'admin',
+    phone: '+91 9876543210',
+    location: { state: 'Tamil Nadu', district: 'Chennai', coastalArea: 'Marina Beach' },
+    permissions: ['all']
+  },
+  'citizen@oceanhazard.com': {
+    id: 'demo_citizen',
+    email: 'citizen@oceanhazard.com',
+    fullName: 'Citizen User',
+    role: 'citizen',
+    phone: '+91 9876543214',
+    location: { state: 'Maharashtra', district: 'Mumbai', coastalArea: 'Juhu Beach' },
+    permissions: ['reports', 'alerts']
+  }
+};
+
+/**
+ * POST /api/auth/demo-login
+ * Demo login for testing purposes
+ */
+router.post('/demo-login', async (req, res) => {
+  try {
+    const { email, password } = req.body;
+    
+    if (password !== 'demo123') {
+      return res.status(401).json({ error: 'Invalid credentials' });
+    }
+    
+    const user = DEMO_ACCOUNTS[email];
+    if (!user) {
+      return res.status(401).json({ error: 'User not found' });
+    }
+    
+    const token = generateToken(user.id);
+    
+    res.json({
+      success: true,
+      user,
+      token,
+      expiresIn: '7d'
+    });
+  } catch (error) {
+    console.error('Demo login error:', error);
+    res.status(500).json({ error: 'Login failed' });
+  }
+});
+
 /**
  * POST /api/auth/register
  * Register a new user with role-based access
