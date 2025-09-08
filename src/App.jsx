@@ -60,6 +60,7 @@ export default function App() {
               <Route path="/register" element={<UserRegistration />} />
               <Route path="/citizen" element={<CitizenDashboard />} />
               <Route path="/analyst" element={<AnalyticsDashboard />} />
+              <Route path="/official" element={<DonationManagement />} />
               <Route path="/social-media" element={<SocialMediaMonitoring />} />
               <Route path="/donations" element={<DonationManagement />} />
               <Route path="/volunteer-registration" element={<VolunteerRegistration />} />

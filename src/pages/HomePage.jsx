@@ -101,7 +101,7 @@ const HomePage = () => {
       color: '#f59e0b',
       icon: '🛡️',
       disabled: !hasAccess('official'),
-      onClick: () => hasAccess('official') ? navigate('/donations') : navigate('/login')
+      onClick: () => hasAccess('official') ? navigate('/official') : navigate('/login')
     },
     {
       id: 'analysts',
