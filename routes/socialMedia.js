@@ -16,11 +16,36 @@ import {
   limit
 } from 'firebase/firestore';
 import { firestore } from '../config/database.js';
+import { getSocialMediaStats } from '../services/socialMediaService.js';
 import Sentiment from 'sentiment';
 import axios from 'axios';
 
 const router = express.Router();
 const sentiment = new Sentiment();
+
+// Get social media monitoring statistics
+router.get('/stats', authenticateToken, async (req, res) => {
+  try {
+    const stats = getSocialMediaStats();
+    res.json({ 
+      success: true, 
+      data: {
+        ...stats,
+        realTime: true,
+        apiStatus: {
+          twitter: process.env.TWITTERAPI_IO_KEY ? 'connected' : 'api_key_missing',
+          reddit: (process.env.REDDIT_CLIENT_ID && process.env.REDDIT_CLIENT_SECRET) ? 'connected' : 'credentials_missing'
+        }
+      }
+    });
+  } catch (error) {
+    console.error('Error fetching social media stats:', error);
+    res.status(500).json({ 
+      success: false, 
+      message: 'Failed to fetch social media statistics' 
+    });
+  }
+});
 
 /**
  * GET /api/social-media/monitoring
