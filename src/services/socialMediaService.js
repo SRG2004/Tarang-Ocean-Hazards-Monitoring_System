@@ -9,7 +9,7 @@ export const socialMediaService = {
     return token ? { Authorization: `Bearer ${token}` } : {};
   },
 
-  // Get social media posts from API
+  // Get social media posts from API (with fallback to simulated data)
   async getSocialMediaPosts(filters = {}) {
     try {
       const params = new URLSearchParams();
@@ -27,12 +27,13 @@ export const socialMediaService = {
 
       return response.data.posts || [];
     } catch (error) {
-      console.error('Error getting social media posts:', error);
-      throw new Error(error.response?.data?.error || 'Failed to get social media posts');
+      console.warn('API not available, using simulated data:', error.message);
+      // Fallback to simulated data if API is not available
+      return await this.fetchSimulatedSocialMediaData();
     }
   },
 
-  // Get trending topics
+  // Get trending topics (with fallback to simulated data)
   async getTrendingTopics(limit = 10) {
     try {
       const response = await axios.get(`${API_BASE_URL}/social-media/trending`, {
@@ -42,12 +43,13 @@ export const socialMediaService = {
 
       return response.data.trending || [];
     } catch (error) {
-      console.error('Error getting trending topics:', error);
-      throw new Error(error.response?.data?.error || 'Failed to get trending topics');
+      console.warn('API not available, generating trending topics from simulated data:', error.message);
+      // Fallback to simulated trending topics
+      return await this.getSimulatedTrendingTopics(limit);
     }
   },
 
-  // Get sentiment statistics
+  // Get sentiment statistics (with fallback to simulated data)
   async getSentimentStats() {
     try {
       const response = await axios.get(`${API_BASE_URL}/social-media/sentiment-stats`, {
@@ -56,8 +58,9 @@ export const socialMediaService = {
 
       return response.data.stats || { positive: 0, negative: 0, neutral: 0, total: 0 };
     } catch (error) {
-      console.error('Error getting sentiment stats:', error);
-      return { positive: 0, negative: 0, neutral: 0, total: 0 };
+      console.warn('API not available, calculating sentiment from simulated data:', error.message);
+      // Fallback to simulated sentiment stats
+      return await this.getSimulatedSentimentStats();
     }
   },
 
@@ -228,28 +231,6 @@ export const socialMediaService = {
     return 'neutral';
   },
 
-  // Get sentiment statistics
-  async getSentimentStats() {
-    try {
-      const posts = await this.fetchSimulatedSocialMediaData();
-      
-      const stats = {
-        positive: 0,
-        negative: 0,
-        neutral: 0,
-        total: posts.length
-      };
-
-      posts.forEach(post => {
-        stats[post.sentiment.label]++;
-      });
-
-      return stats;
-    } catch (error) {
-      console.error('Error getting sentiment stats:', error);
-      return { positive: 0, negative: 0, neutral: 0, total: 0 };
-    }
-  },
 
   // Fetch simulated social media data for demo purposes
   async fetchSimulatedSocialMediaData() {
@@ -315,5 +296,49 @@ export const socialMediaService = {
     ];
 
     return simulatedPosts;
+  },
+
+  // Get simulated trending topics
+  async getSimulatedTrendingTopics(limit = 10) {
+    const posts = await this.fetchSimulatedSocialMediaData();
+    
+    // Count keyword frequencies
+    const keywordCounts = {};
+    posts.forEach(post => {
+      post.keywords.forEach(keyword => {
+        keywordCounts[keyword] = (keywordCounts[keyword] || 0) + 1;
+      });
+    });
+
+    // Sort by frequency and return top trending
+    const trending = Object.entries(keywordCounts)
+      .sort(([,a], [,b]) => b - a)
+      .slice(0, limit)
+      .map(([keyword, count]) => ({
+        name: keyword,
+        count,
+        posts: count + ' posts',
+        sentiment: this.getKeywordSentiment(keyword, posts)
+      }));
+
+    return trending;
+  },
+
+  // Get simulated sentiment statistics
+  async getSimulatedSentimentStats() {
+    const posts = await this.fetchSimulatedSocialMediaData();
+    
+    const stats = {
+      positive: 0,
+      negative: 0,
+      neutral: 0,
+      total: posts.length
+    };
+
+    posts.forEach(post => {
+      stats[post.sentiment.label]++;
+    });
+
+    return stats;
   }
 };
