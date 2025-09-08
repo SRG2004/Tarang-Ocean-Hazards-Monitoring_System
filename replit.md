@@ -10,6 +10,18 @@ The system integrates Firebase for backend services, interactive mapping capabil
 
 Preferred communication style: Simple, everyday language.
 
+## Recent Changes
+
+### September 8, 2025
+- Successfully imported and configured the Taranga Ocean Hazard Monitor project
+- Installed all dependencies and resolved package conflicts
+- Configured dual server setup:
+  - Frontend (React + Vite) running on port 5000 for development
+  - Backend (Node.js + Express) running on port 3001 for API services
+- Built production frontend assets in dist/ folder
+- Configured deployment for autoscale target with proper build and run commands
+- Project is now fully functional in Replit environment
+
 ## System Architecture
 
 ### Frontend Architecture
