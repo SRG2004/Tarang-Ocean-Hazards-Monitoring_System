@@ -1,7 +1,20 @@
-import axios from 'axios';
+import { 
+  collection, 
+  addDoc, 
+  getDocs, 
+  doc, 
+  updateDoc, 
+  query, 
+  where, 
+  orderBy, 
+  limit,
+  onSnapshot,
+  serverTimestamp,
+  GeoPoint
+} from 'firebase/firestore';
+import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+import { db, storage } from '../config/firebase';
 import { sampleHazardReports, generateHotspots, getReportStatistics } from '../data/sampleHazardReports';
-
-const API_BASE_URL = import.meta.env.VITE_API_URL || '/api';
 
 export const hazardReportService = {
   // Get auth token
@@ -10,51 +23,132 @@ export const hazardReportService = {
     return token ? { Authorization: `Bearer ${token}` } : {};
   },
 
-  // Submit a new hazard report
+  // Submit a new hazard report to Firebase
   async submitReport(reportData) {
     try {
-      const formData = new FormData();
-
-      // Add basic report data
-      Object.keys(reportData).forEach(key => {
-        if (key !== 'mediaFiles') {
-          if (typeof reportData[key] === 'object') {
-            formData.append(key, JSON.stringify(reportData[key]));
-          } else {
-            formData.append(key, reportData[key]);
-          }
-        }
-      });
-
-      // Add media files if present
+      console.log('Submitting report:', reportData);
+      
+      // Upload images to Firebase Storage first
+      const imageUrls = [];
       if (reportData.mediaFiles && reportData.mediaFiles.length > 0) {
-        reportData.mediaFiles.forEach((file, index) => {
-          formData.append('media', file);
-        });
+        for (const file of reportData.mediaFiles) {
+          const imageRef = ref(storage, `hazard-reports/${Date.now()}_${file.name}`);
+          const snapshot = await uploadBytes(imageRef, file);
+          const url = await getDownloadURL(snapshot.ref);
+          imageUrls.push(url);
+        }
       }
 
-      const response = await axios.post(`${API_BASE_URL}/hazards/report`, formData, {
-        headers: {
-          ...this.getAuthHeaders(),
-          'Content-Type': 'multipart/form-data'
+      // Prepare report data for Firestore
+      const firestoreReport = {
+        title: reportData.title || 'Ocean Hazard Report',
+        description: reportData.description || '',
+        type: reportData.type || 'other',
+        severity: reportData.severity || 'medium',
+        location: {
+          latitude: reportData.coordinates?.lat || reportData.location?.latitude || 0,
+          longitude: reportData.coordinates?.lng || reportData.location?.longitude || 0,
+          address: reportData.location?.address || 'Unknown location',
+          state: reportData.location?.state || '',
+          district: reportData.location?.district || '',
+          geopoint: new GeoPoint(
+            reportData.coordinates?.lat || reportData.location?.latitude || 0,
+            reportData.coordinates?.lng || reportData.location?.longitude || 0
+          )
+        },
+        reportedBy: {
+          userId: reportData.userId,
+          name: reportData.reporterName || 'Anonymous',
+          phone: reportData.reporterPhone || '',
+          email: reportData.reporterEmail || ''
+        },
+        images: imageUrls,
+        status: 'unverified',
+        verified: false,
+        timestamp: serverTimestamp(),
+        reportedAt: new Date().toISOString(),
+        metadata: {
+          source: 'citizen_report',
+          deviceType: 'web',
+          userAgent: navigator.userAgent
         }
-      });
+      };
 
+      // Add to Firestore
+      const docRef = await addDoc(collection(db, 'hazardReports'), firestoreReport);
+      
+      console.log('Report submitted successfully:', docRef.id);
       return {
         success: true,
-        reportId: response.data.report.id,
-        data: response.data.report
+        reportId: docRef.id,
+        data: { id: docRef.id, ...firestoreReport }
       };
     } catch (error) {
-      console.error('Error submitting report:', error);
-      throw new Error(error.response?.data?.error || 'Failed to submit report');
+      console.error('Error submitting report to Firebase:', error);
+      throw new Error('Failed to submit report: ' + error.message);
     }
   },
 
-  // Get all reports with filters
+  // Get all reports from Firebase with filters
   async getReports(filters = {}) {
     try {
-      // For demo purposes, return sample data with filters applied
+      console.log('Getting reports with filters:', filters);
+      
+      // Create base query
+      let q = collection(db, 'hazardReports');
+      
+      // Apply filters
+      const queryConstraints = [];
+      
+      if (filters.status) {
+        queryConstraints.push(where('status', '==', filters.status));
+      }
+      if (filters.severity) {
+        queryConstraints.push(where('severity', '==', filters.severity));
+      }
+      if (filters.type) {
+        queryConstraints.push(where('type', '==', filters.type));
+      }
+      if (filters.userId) {
+        queryConstraints.push(where('reportedBy.userId', '==', filters.userId));
+      }
+      
+      // Add ordering and limit
+      queryConstraints.push(orderBy('timestamp', 'desc'));
+      if (filters.limit) {
+        queryConstraints.push(limit(filters.limit));
+      }
+      
+      // Execute query
+      if (queryConstraints.length > 0) {
+        q = query(q, ...queryConstraints);
+      }
+      
+      const querySnapshot = await getDocs(q);
+      const reports = [];
+      
+      querySnapshot.forEach((doc) => {
+        const data = doc.data();
+        reports.push({
+          id: doc.id,
+          ...data,
+          // Transform for compatibility with existing components
+          coordinates: {
+            lat: data.location.latitude,
+            lng: data.location.longitude
+          },
+          createdAt: data.reportedAt,
+          userInfo: data.reportedBy
+        });
+      });
+      
+      console.log(`Found ${reports.length} reports`);
+      return reports;
+      
+    } catch (error) {
+      console.error('Error getting reports from Firebase:', error);
+      // Fallback to sample data if Firebase fails
+      console.log('Falling back to sample data');
       let reports = [...sampleHazardReports];
       
       // Transform data structure to match map component expectations
@@ -68,38 +162,7 @@ export const hazardReportService = {
         userInfo: report.reportedBy
       }));
       
-      // Apply filters
-      if (filters.status) {
-        reports = reports.filter(r => r.status === filters.status);
-      }
-      if (filters.severity) {
-        reports = reports.filter(r => r.severity === filters.severity);
-      }
-      if (filters.type) {
-        reports = reports.filter(r => r.type === filters.type);
-      }
-      if (filters.state) {
-        reports = reports.filter(r => r.location.state === filters.state);
-      }
-      if (filters.dateFrom) {
-        const fromDate = new Date(filters.dateFrom);
-        reports = reports.filter(r => new Date(r.reportedAt) >= fromDate);
-      }
-      if (filters.dateTo) {
-        const toDate = new Date(filters.dateTo);
-        reports = reports.filter(r => new Date(r.reportedAt) <= toDate);
-      }
-      
-      // Sort by most recent first
-      reports.sort((a, b) => new Date(b.reportedAt) - new Date(a.reportedAt));
-      
-      // Simulate API delay
-      await new Promise(resolve => setTimeout(resolve, 500));
-      
-      return reports;
-    } catch (error) {
-      console.error('Error getting reports:', error);
-      throw new Error('Failed to get reports');
+      return reports.slice(0, filters.limit || 50);
     }
   },
 
