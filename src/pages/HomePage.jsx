@@ -131,28 +131,6 @@ const HomePage = () => {
 
   return (
     <div className="homepage">
-      {/* Header */}
-      <header className="homepage-header">
-        <div className="header-content">
-          <div className="logo-section">
-            <div className="logo">
-              <span className="logo-text">Taranga</span>
-            </div>
-            <div className="platform-badge">Ocean Safety Platform</div>
-          </div>
-          <div className="user-section">
-            <span className="welcome-text">Welcome back!</span>
-            <div className="user-profile">
-              <div className="user-avatar">DU</div>
-              <div className="user-info">
-                <span className="user-name">Demo User</span>
-                <span className="user-role">+ Citizen</span>
-              </div>
-            </div>
-          </div>
-        </div>
-      </header>
-
       {/* Main Content */}
       <main className="homepage-main">
         {/* Hero Section */}
