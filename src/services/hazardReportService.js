@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { sampleHazardReports, generateHotspots, getReportStatistics } from '../data/sampleHazardReports';
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || '/api';
 
@@ -53,23 +54,41 @@ export const hazardReportService = {
   // Get all reports with filters
   async getReports(filters = {}) {
     try {
-      const params = new URLSearchParams();
-
-      // Add filters to query params
-      Object.keys(filters).forEach(key => {
-        if (filters[key] !== undefined && filters[key] !== null) {
-          params.append(key, filters[key]);
-        }
-      });
-
-      const response = await axios.get(`${API_BASE_URL}/hazards?${params}`, {
-        headers: this.getAuthHeaders()
-      });
-
-      return response.data.reports || [];
+      // For demo purposes, return sample data with filters applied
+      let reports = [...sampleHazardReports];
+      
+      // Apply filters
+      if (filters.status) {
+        reports = reports.filter(r => r.status === filters.status);
+      }
+      if (filters.severity) {
+        reports = reports.filter(r => r.severity === filters.severity);
+      }
+      if (filters.type) {
+        reports = reports.filter(r => r.type === filters.type);
+      }
+      if (filters.state) {
+        reports = reports.filter(r => r.location.state === filters.state);
+      }
+      if (filters.dateFrom) {
+        const fromDate = new Date(filters.dateFrom);
+        reports = reports.filter(r => new Date(r.reportedAt) >= fromDate);
+      }
+      if (filters.dateTo) {
+        const toDate = new Date(filters.dateTo);
+        reports = reports.filter(r => new Date(r.reportedAt) <= toDate);
+      }
+      
+      // Sort by most recent first
+      reports.sort((a, b) => new Date(b.reportedAt) - new Date(a.reportedAt));
+      
+      // Simulate API delay
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
+      return reports;
     } catch (error) {
       console.error('Error getting reports:', error);
-      throw new Error(error.response?.data?.error || 'Failed to get reports');
+      throw new Error('Failed to get reports');
     }
   },
 
@@ -149,29 +168,30 @@ export const hazardReportService = {
   // Get hazard statistics
   async getHazardStats() {
     try {
-      const reports = await this.getReports();
-      const stats = {
-        total: reports.length,
-        byStatus: {},
-        bySeverity: {},
-        byType: {},
-        recent: reports.filter(r => {
-          const reportDate = new Date(r.createdAt);
-          const weekAgo = new Date();
-          weekAgo.setDate(weekAgo.getDate() - 7);
-          return reportDate > weekAgo;
-        }).length
-      };
-
-      reports.forEach(report => {
-        stats.byStatus[report.status] = (stats.byStatus[report.status] || 0) + 1;
-        stats.bySeverity[report.severity] = (stats.bySeverity[report.severity] || 0) + 1;
-        stats.byType[report.type] = (stats.byType[report.type] || 0) + 1;
-      });
-
+      // Return sample data statistics
+      const stats = getReportStatistics(sampleHazardReports);
+      
+      // Simulate API delay
+      await new Promise(resolve => setTimeout(resolve, 300));
+      
       return stats;
     } catch (error) {
       console.error('Error getting hazard stats:', error);
+      throw error;
+    }
+  },
+
+  // Get hotspots for map visualization
+  async getHotspots() {
+    try {
+      const hotspots = generateHotspots(sampleHazardReports);
+      
+      // Simulate API delay
+      await new Promise(resolve => setTimeout(resolve, 400));
+      
+      return hotspots;
+    } catch (error) {
+      console.error('Error getting hotspots:', error);
       throw error;
     }
   },

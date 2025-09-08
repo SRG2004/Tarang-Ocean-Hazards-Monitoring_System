@@ -1,51 +1,85 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useApp } from '../contexts/AppContext';
+import toast from 'react-hot-toast';
 import './LoginPage.css';
 
 const LoginPage = () => {
   const navigate = useNavigate();
+  const { login, loading } = useApp();
   const [formData, setFormData] = useState({
     email: '',
     password: '',
     rememberMe: false
   });
+  const [loginLoading, setLoginLoading] = useState(false);
 
   const demoAccounts = [
     {
       type: 'Admin',
       email: 'admin@oceanhazard.com',
-      description: 'Full system access',
-      icon: '👨‍💼'
+      description: 'Full system access & management',
+      icon: '👨‍💼',
+      password: 'demo123'
     },
     {
-      type: 'Analyst',
+      type: 'Data Analyst',
       email: 'analyst@oceanhazard.com',
-      description: 'Data analysis & reports',
-      icon: '📊'
+      description: 'Analytics, reports & social media monitoring',
+      icon: '📊',
+      password: 'demo123'
     },
     {
-      type: 'Officer',
+      type: 'Emergency Officer',
       email: 'officer@oceanhazard.com',
-      description: 'Emergency response',
-      icon: '🛡️'
+      description: 'Emergency response & coordination',
+      icon: '🛡️',
+      password: 'demo123'
     },
     {
       type: 'Volunteer',
       email: 'volunteer@oceanhazard.com',
-      description: 'Community support',
-      icon: '🤝'
+      description: 'Volunteer tasks & community support',
+      icon: '🤝',
+      password: 'demo123'
+    },
+    {
+      type: 'Citizen',
+      email: 'citizen@oceanhazard.com',
+      description: 'Report hazards & receive alerts',
+      icon: '👥',
+      password: 'demo123'
     }
   ];
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log('Login attempt:', formData);
-    // In a real app, this would authenticate with your backend
-    // For demo purposes, redirect based on email
-    if (formData.email.includes('admin') || formData.email.includes('analyst')) {
-      navigate('/analyst');
-    } else {
-      navigate('/citizen');
+    
+    if (!formData.email || !formData.password) {
+      toast.error('Please enter both email and password');
+      return;
+    }
+
+    setLoginLoading(true);
+    try {
+      const result = await login(formData.email, formData.password);
+      
+      // Redirect based on user role
+      if (result.user.role === 'admin' || result.user.role === 'analyst') {
+        navigate('/analyst');
+      } else if (result.user.role === 'official') {
+        navigate('/citizen'); // Officers can access citizen dashboard with additional features
+      } else if (result.user.role === 'volunteer') {
+        navigate('/volunteer-registration'); // Show volunteer dashboard
+      } else {
+        navigate('/citizen');
+      }
+      
+      toast.success(`Welcome back, ${result.user.fullName}!`);
+    } catch (error) {
+      toast.error(error.message);
+    } finally {
+      setLoginLoading(false);
     }
   };
 
@@ -57,12 +91,35 @@ const LoginPage = () => {
     }));
   };
 
-  const handleDemoLogin = (account) => {
+  const handleDemoLogin = async (account) => {
     setFormData({
       email: account.email,
-      password: 'demo123',
+      password: account.password,
       rememberMe: false
     });
+    
+    // Automatically login with demo account
+    setLoginLoading(true);
+    try {
+      const result = await login(account.email, account.password);
+      
+      // Redirect based on user role
+      if (result.user.role === 'admin' || result.user.role === 'analyst') {
+        navigate('/analyst');
+      } else if (result.user.role === 'official') {
+        navigate('/citizen');
+      } else if (result.user.role === 'volunteer') {
+        navigate('/volunteer-registration');
+      } else {
+        navigate('/citizen');
+      }
+      
+      toast.success(`Logged in as ${account.type}`);
+    } catch (error) {
+      toast.error(error.message);
+    } finally {
+      setLoginLoading(false);
+    }
   };
 
   return (
@@ -114,8 +171,12 @@ const LoginPage = () => {
               <a href="#" className="forgot-password">Forgot Password?</a>
             </div>
 
-            <button type="submit" className="signin-button">
-              Sign In
+            <button 
+              type="submit" 
+              className="signin-button"
+              disabled={loginLoading || loading}
+            >
+              {loginLoading || loading ? 'Signing In...' : 'Sign In'}
             </button>
           </form>
 

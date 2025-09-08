@@ -2,21 +2,84 @@ import axios from 'axios';
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || '/api';
 
+// Demo accounts for testing
+const DEMO_ACCOUNTS = {
+  'admin@oceanhazard.com': {
+    id: 'demo_admin',
+    email: 'admin@oceanhazard.com',
+    fullName: 'Admin User',
+    role: 'admin',
+    phone: '+91 9876543210',
+    location: { state: 'Tamil Nadu', district: 'Chennai', coastalArea: 'Marina Beach' },
+    permissions: ['all']
+  },
+  'analyst@oceanhazard.com': {
+    id: 'demo_analyst', 
+    email: 'analyst@oceanhazard.com',
+    fullName: 'Data Analyst',
+    role: 'analyst',
+    phone: '+91 9876543211',
+    location: { state: 'Kerala', district: 'Kochi', coastalArea: 'Fort Kochi' },
+    permissions: ['analytics', 'reports', 'social_media']
+  },
+  'officer@oceanhazard.com': {
+    id: 'demo_officer',
+    email: 'officer@oceanhazard.com', 
+    fullName: 'Emergency Officer',
+    role: 'official',
+    phone: '+91 9876543212',
+    location: { state: 'Gujarat', district: 'Surat', coastalArea: 'Dumas Beach' },
+    permissions: ['emergency', 'coordination', 'reports']
+  },
+  'volunteer@oceanhazard.com': {
+    id: 'demo_volunteer',
+    email: 'volunteer@oceanhazard.com',
+    fullName: 'Volunteer User', 
+    role: 'volunteer',
+    phone: '+91 9876543213',
+    location: { state: 'Odisha', district: 'Puri', coastalArea: 'Puri Beach' },
+    permissions: ['volunteer_tasks', 'reports']
+  },
+  'citizen@oceanhazard.com': {
+    id: 'demo_citizen',
+    email: 'citizen@oceanhazard.com',
+    fullName: 'Citizen User',
+    role: 'citizen', 
+    phone: '+91 9876543214',
+    location: { state: 'Maharashtra', district: 'Mumbai', coastalArea: 'Juhu Beach' },
+    permissions: ['reports', 'alerts']
+  }
+};
+
+const DEMO_PASSWORD = 'demo123';
+
 export const authService = {
   // Register a new user
   async register(userData) {
     try {
-      const response = await axios.post(`${API_BASE_URL}/auth/register`, userData);
+      // For demo purposes, create a local user account
+      const user = {
+        id: userData.userId || `user_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+        email: userData.email,
+        fullName: userData.fullName,
+        role: userData.role,
+        phone: userData.phone,
+        location: userData.location,
+        preferences: userData.preferences,
+        registrationDate: userData.registrationDate,
+        status: userData.status || 'active',
+        permissions: this.getRolePermissions(userData.role)
+      };
 
-      if (response.data.token) {
-        // Store token in localStorage
-        localStorage.setItem('authToken', response.data.token);
-        localStorage.setItem('user', JSON.stringify(response.data.user));
-      }
+      const token = `user_token_${user.id}_${Date.now()}`;
+      
+      // Store user data
+      localStorage.setItem('authToken', token);
+      localStorage.setItem('user', JSON.stringify(user));
 
       return {
-        user: response.data.user,
-        token: response.data.token,
+        user,
+        token,
         success: true
       };
     } catch (error) {
@@ -25,9 +88,39 @@ export const authService = {
     }
   },
 
+  // Get role permissions
+  getRolePermissions(role) {
+    const permissions = {
+      admin: ['all'],
+      analyst: ['analytics', 'reports', 'social_media'],
+      official: ['emergency', 'coordination', 'reports'],
+      volunteer: ['volunteer_tasks', 'reports'],
+      citizen: ['reports', 'alerts'],
+      researcher: ['research', 'analytics', 'reports']
+    };
+    return permissions[role] || ['reports'];
+  },
+
   // Login user
   async login(email, password) {
     try {
+      // Check for demo accounts first
+      if (DEMO_ACCOUNTS[email] && password === DEMO_PASSWORD) {
+        const user = DEMO_ACCOUNTS[email];
+        const token = `demo_token_${user.id}_${Date.now()}`;
+        
+        // Store demo user data
+        localStorage.setItem('authToken', token);
+        localStorage.setItem('user', JSON.stringify(user));
+        
+        return {
+          user,
+          token,
+          success: true
+        };
+      }
+
+      // For non-demo accounts, use API
       const response = await axios.post(`${API_BASE_URL}/auth/login`, {
         email,
         password,
@@ -47,7 +140,7 @@ export const authService = {
       };
     } catch (error) {
       console.error('Login error:', error);
-      throw new Error(error.response?.data?.error || 'Login failed');
+      throw new Error(error.response?.data?.error || 'Invalid email or password');
     }
   },
 
