@@ -238,19 +238,27 @@ const HomePage = () => {
           </div>
         </section>
 
-        {/* Citizen Registration CTA */}
+        {/* Volunteer Registration CTA */}
         <section className="cta-section">
           <div className="cta-card">
-            <h2 className="cta-title">Citizen Registration</h2>
+            <h2 className="cta-title">Volunteer Registration</h2>
             <p className="cta-subtitle">
-              Join the community as a citizen to report hazards, receive alerts, and stay informed about ocean safety.
+              Join our volunteer network to help with ocean hazard monitoring, emergency response, and community safety initiatives.
             </p>
-            <button 
-              className="cta-button"
-              onClick={() => navigate('/volunteer-registration')}
-            >
-              📝 Register as Citizen
-            </button>
+            <div className="cta-buttons">
+              <button 
+                className="cta-button primary"
+                onClick={() => navigate('/register')}
+              >
+                👤 User Registration
+              </button>
+              <button 
+                className="cta-button secondary"
+                onClick={() => navigate('/volunteer-registration')}
+              >
+                🤝 Volunteer Registration
+              </button>
+            </div>
           </div>
         </section>
       </main>

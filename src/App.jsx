@@ -9,8 +9,10 @@ import AnalyticsDashboard from './pages/AnalyticsDashboard';
 import SocialMediaMonitoring from './pages/SocialMediaMonitoring';
 import DonationManagement from './pages/DonationManagement';
 import VolunteerRegistration from './pages/VolunteerRegistration';
+import UserRegistration from './pages/UserRegistration';
 import LoginPage from './pages/LoginPage';
 import MapViewPage from './pages/MapViewPage';
+import Settings from './pages/Settings';
 import './App.css';
 
 export default function App() {
@@ -55,12 +57,14 @@ export default function App() {
             <Routes>
               <Route path="/" element={<HomePage />} />
               <Route path="/login" element={<LoginPage />} />
+              <Route path="/register" element={<UserRegistration />} />
               <Route path="/citizen" element={<CitizenDashboard />} />
               <Route path="/analyst" element={<AnalyticsDashboard />} />
               <Route path="/social-media" element={<SocialMediaMonitoring />} />
               <Route path="/donations" element={<DonationManagement />} />
               <Route path="/volunteer-registration" element={<VolunteerRegistration />} />
               <Route path="/map" element={<MapViewPage />} />
+              <Route path="/settings" element={<Settings />} />
             </Routes>
           </div>
         </Router>

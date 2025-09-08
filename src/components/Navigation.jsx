@@ -13,7 +13,8 @@ const Navigation = () => {
     { path: '/social-media', label: 'Social Media', icon: '📱' },
     { path: '/donations', label: 'Donations', icon: '🤝' },
     { path: '/map', label: 'Map View', icon: '🗺️' },
-    { path: '/volunteer-registration', label: 'Register', icon: '📝' },
+    { path: '/register', label: 'Register', icon: '📝' },
+    { path: '/settings', label: 'Settings', icon: '⚙️' },
     { path: '/login', label: 'Login', icon: '🔐' }
   ];
 
