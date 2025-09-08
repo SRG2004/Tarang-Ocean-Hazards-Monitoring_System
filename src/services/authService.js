@@ -138,6 +138,17 @@ export const authService = {
     }
   },
 
+  // Get user data by ID (alias for getUserProfile for compatibility)
+  async getUserData(userId) {
+    try {
+      // For compatibility with AppContext, return current user data
+      return this.getCurrentUser() || await this.getUserProfile();
+    } catch (error) {
+      console.error('Error getting user data:', error);
+      return this.getCurrentUser(); // Fallback to cached data
+    }
+  },
+
   // Update user profile
   async updateProfile(userData) {
     try {

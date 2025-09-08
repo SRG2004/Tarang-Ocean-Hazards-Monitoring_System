@@ -231,7 +231,7 @@ export const socialMediaService = {
   // Get sentiment statistics
   async getSentimentStats() {
     try {
-      const posts = await this.getSocialMediaPosts({ limit: 100 });
+      const posts = await this.fetchSimulatedSocialMediaData();
       
       const stats = {
         positive: 0,
@@ -249,5 +249,71 @@ export const socialMediaService = {
       console.error('Error getting sentiment stats:', error);
       return { positive: 0, negative: 0, neutral: 0, total: 0 };
     }
+  },
+
+  // Fetch simulated social media data for demo purposes
+  async fetchSimulatedSocialMediaData() {
+    // Simulate API delay
+    await new Promise(resolve => setTimeout(resolve, 500));
+    
+    const simulatedPosts = [
+      {
+        id: '1',
+        platform: 'twitter',
+        content: 'High waves reported near Chennai coast. Stay safe everyone! #OceanSafety',
+        author: 'CoastalWatch',
+        timestamp: new Date(Date.now() - 1000 * 60 * 30).toISOString(),
+        sentiment: { label: 'negative', score: -2 },
+        keywords: ['high waves', 'Chennai', 'coast'],
+        isHazardRelated: true,
+        location: { lat: 13.0827, lng: 80.2707 }
+      },
+      {
+        id: '2',
+        platform: 'facebook',
+        content: 'Beautiful calm seas today at Marina Beach. Perfect for morning walks.',
+        author: 'BeachLover',
+        timestamp: new Date(Date.now() - 1000 * 60 * 45).toISOString(),
+        sentiment: { label: 'positive', score: 3 },
+        keywords: ['calm seas', 'Marina Beach'],
+        isHazardRelated: false,
+        location: { lat: 13.0827, lng: 80.2707 }
+      },
+      {
+        id: '3',
+        platform: 'twitter',
+        content: 'Storm warning issued for Visakhapatnam. Fishing boats advised to return to shore.',
+        author: 'WeatherAlert',
+        timestamp: new Date(Date.now() - 1000 * 60 * 60).toISOString(),
+        sentiment: { label: 'negative', score: -3 },
+        keywords: ['storm warning', 'Visakhapatnam', 'fishing boats'],
+        isHazardRelated: true,
+        location: { lat: 17.6868, lng: 83.2185 }
+      },
+      {
+        id: '4',
+        platform: 'youtube',
+        content: 'Great conditions for surfing at Kovalam beach this morning!',
+        author: 'SurfGuru',
+        timestamp: new Date(Date.now() - 1000 * 60 * 90).toISOString(),
+        sentiment: { label: 'positive', score: 2 },
+        keywords: ['surfing', 'Kovalam'],
+        isHazardRelated: false,
+        location: { lat: 8.4004, lng: 76.9784 }
+      },
+      {
+        id: '5',
+        platform: 'twitter',
+        content: 'Unusual tidal patterns observed near Puri. Local authorities are monitoring.',
+        author: 'OceanWatch',
+        timestamp: new Date(Date.now() - 1000 * 60 * 120).toISOString(),
+        sentiment: { label: 'neutral', score: 0 },
+        keywords: ['tidal patterns', 'Puri', 'monitoring'],
+        isHazardRelated: true,
+        location: { lat: 19.8135, lng: 85.8312 }
+      }
+    ];
+
+    return simulatedPosts;
   }
 };
