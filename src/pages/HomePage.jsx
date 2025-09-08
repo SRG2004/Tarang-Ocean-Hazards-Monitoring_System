@@ -7,21 +7,21 @@ const HomePage = () => {
   const navigate = useNavigate();
   const { user, isAuthenticated } = useApp();
 
-  // Redirect authenticated users to their appropriate dashboard
-  useEffect(() => {
-    if (isAuthenticated && user) {
-      // Redirect based on user role
-      if (user.role === 'admin' || user.role === 'analyst') {
-        navigate('/analyst');
-      } else if (user.role === 'official') {
-        navigate('/donations');
-      } else if (user.role === 'volunteer') {
-        navigate('/volunteer-registration');
-      } else {
-        navigate('/citizen');
-      }
+  // Helper function to check if user has access to a role
+  const hasAccess = (roleType) => {
+    if (!isAuthenticated || !user) return false;
+    
+    switch (roleType) {
+      case 'citizen':
+        return true; // All authenticated users can access citizen dashboard
+      case 'official':
+        return user.role === 'admin' || user.role === 'official';
+      case 'analyst':
+        return user.role === 'admin' || user.role === 'analyst';
+      default:
+        return false;
     }
-  }, [isAuthenticated, user, navigate]);
+  };
 
   const quickActions = [
     {
@@ -77,10 +77,13 @@ const HomePage = () => {
         'Community Updates',
         'Emergency Contacts'
       ],
-      buttonText: 'Enter as Citizen',
+      buttonText: isAuthenticated 
+        ? 'Enter as Citizen' 
+        : 'Enter as Citizen (Requires Login)',
       color: '#6366f1',
       icon: '👥',
-      onClick: () => navigate('/citizen')
+      disabled: !isAuthenticated,
+      onClick: () => isAuthenticated ? navigate('/citizen') : navigate('/login')
     },
     {
       id: 'officials',
@@ -92,11 +95,13 @@ const HomePage = () => {
         'Resource Allocation',
         'Public Communications'
       ],
-      buttonText: 'Enter as Officer (Requires Login)',
+      buttonText: hasAccess('official') 
+        ? 'Enter as Officer' 
+        : 'Enter as Officer (Requires Login)',
       color: '#f59e0b',
       icon: '🛡️',
-      disabled: true,
-      onClick: () => navigate('/login')
+      disabled: !hasAccess('official'),
+      onClick: () => hasAccess('official') ? navigate('/donations') : navigate('/login')
     },
     {
       id: 'analysts',
@@ -108,11 +113,13 @@ const HomePage = () => {
         'Predictive Models',
         'Research Reports'
       ],
-      buttonText: 'Enter as Analyst (Requires Login)',
+      buttonText: hasAccess('analyst') 
+        ? 'Enter as Analyst' 
+        : 'Enter as Analyst (Requires Login)',
       color: '#8b5cf6',
       icon: '📈',
-      disabled: true,
-      onClick: () => navigate('/login')
+      disabled: !hasAccess('analyst'),
+      onClick: () => hasAccess('analyst') ? navigate('/analyst') : navigate('/login')
     }
   ];
 

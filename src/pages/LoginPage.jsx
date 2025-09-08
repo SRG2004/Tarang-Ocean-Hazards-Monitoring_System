@@ -57,16 +57,8 @@ const LoginPage = () => {
     try {
       const result = await login(formData.email, formData.password);
       
-      // Redirect based on user role (4-role system)
-      if (result.user.role === 'admin') {
-        navigate('/analyst'); // Admin gets access to all dashboards
-      } else if (result.user.role === 'analyst') {
-        navigate('/analyst'); // Analyst can access citizen and analyst dashboard
-      } else if (result.user.role === 'official') {
-        navigate('/donations'); // Official can access official and citizen dashboard
-      } else {
-        navigate('/citizen'); // Citizens can only access citizen dashboard
-      }
+      // Redirect all users to homepage after login
+      navigate('/');
       
       toast.success(`Welcome back, ${result.user.fullName}!`);
     } catch (error) {
@@ -96,16 +88,8 @@ const LoginPage = () => {
     try {
       const result = await login(account.email, account.password);
       
-      // Redirect based on user role
-      if (result.user.role === 'admin' || result.user.role === 'analyst') {
-        navigate('/analyst');
-      } else if (result.user.role === 'official') {
-        navigate('/donations');
-      } else if (result.user.role === 'volunteer') {
-        navigate('/volunteer-registration');
-      } else {
-        navigate('/citizen');
-      }
+      // Redirect all users to homepage after login
+      navigate('/');
       
       toast.success(`Logged in as ${account.type}`);
     } catch (error) {
