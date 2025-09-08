@@ -1,35 +1,86 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../contexts/AuthContext';
+import { hazardReportService } from '../services/hazardReportService';
+import CreateReportForm from '../components/CreateReportForm';
 import './CitizenDashboard.css';
 
 const CitizenDashboard = () => {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [activeTab, setActiveTab] = useState('dashboard');
+  const [showCreateReport, setShowCreateReport] = useState(false);
+  const [userReports, setUserReports] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [stats, setStats] = useState({
+    total: 0,
+    verified: 0,
+    pending: 0,
+    rejected: 0
+  });
 
-  const stats = [
-    { label: 'Your Reports', value: '2', color: '#6366f1' },
-    { label: 'Verified', value: '1', color: '#10b981' },
-    { label: 'Pending', value: '1', color: '#f59e0b' }
-  ];
+  // Load user reports on component mount
+  useEffect(() => {
+    loadUserReports();
+  }, [user]);
 
-  const recentReports = [
-    {
-      id: 1,
-      title: 'High waves observed near beach',
-      type: 'high_waves',
-      status: 'unverified',
-      severity: 'medium',
-      date: '07/09/2025'
-    },
-    {
-      id: 2,
-      title: 'Strong currents in the bay',
-      type: 'strong_currents',
-      status: 'verified',
-      severity: 'high',
-      date: '07/09/2025'
+  const loadUserReports = async () => {
+    if (!user?.uid) return;
+    
+    setLoading(true);
+    try {
+      const reports = await hazardReportService.getReports({ 
+        userId: user.uid,
+        limit: 20 
+      });
+      
+      setUserReports(reports);
+      
+      // Calculate stats
+      const statsData = {
+        total: reports.length,
+        verified: reports.filter(r => r.status === 'verified').length,
+        pending: reports.filter(r => r.status === 'unverified' || r.status === 'pending').length,
+        rejected: reports.filter(r => r.status === 'rejected').length
+      };
+      setStats(statsData);
+      
+    } catch (error) {
+      console.error('Error loading user reports:', error);
+      // Use fallback data on error
+      setUserReports([]);
+      setStats({ total: 0, verified: 0, pending: 0, rejected: 0 });
+    } finally {
+      setLoading(false);
     }
-  ];
+  };
+
+  const handleReportSuccess = () => {
+    setShowCreateReport(false);
+    loadUserReports(); // Refresh the reports list
+  };
+
+  const handleQuickAction = (actionId) => {
+    switch (actionId) {
+      case 'report':
+        setShowCreateReport(true);
+        break;
+      case 'map':
+        navigate('/map');
+        break;
+      case 'community':
+        navigate('/social-media');
+        break;
+      case 'settings':
+        navigate('/profile');
+        break;
+      case 'support':
+        navigate('/donations');
+        break;
+      default:
+        console.log('Action not implemented:', actionId);
+    }
+  };
 
   const quickActions = [
     {
@@ -145,7 +196,12 @@ const CitizenDashboard = () => {
             <section className="actions-section">
               <div className="actions-grid">
                 {quickActions.map((action) => (
-                  <div key={action.id} className="action-card">
+                  <div 
+                    key={action.id} 
+                    className="action-card"
+                    onClick={() => handleQuickAction(action.id)}
+                    style={{ cursor: 'pointer' }}
+                  >
                     <div 
                       className="action-icon"
                       style={{ color: action.color }}
@@ -162,17 +218,30 @@ const CitizenDashboard = () => {
             {/* Stats Cards */}
             <section className="stats-section">
               <div className="stats-grid">
-                {stats.map((stat, index) => (
-                  <div key={index} className="stat-card">
-                    <div 
-                      className="stat-value"
-                      style={{ color: stat.color }}
-                    >
-                      {stat.value}
-                    </div>
-                    <div className="stat-label">{stat.label}</div>
+                <div className="stat-card">
+                  <div className="stat-value" style={{ color: '#6366f1' }}>
+                    {loading ? '...' : stats.total}
                   </div>
-                ))}
+                  <div className="stat-label">Your Reports</div>
+                </div>
+                <div className="stat-card">
+                  <div className="stat-value" style={{ color: '#10b981' }}>
+                    {loading ? '...' : stats.verified}
+                  </div>
+                  <div className="stat-label">Verified</div>
+                </div>
+                <div className="stat-card">
+                  <div className="stat-value" style={{ color: '#f59e0b' }}>
+                    {loading ? '...' : stats.pending}
+                  </div>
+                  <div className="stat-label">Pending</div>
+                </div>
+                <div className="stat-card">
+                  <div className="stat-value" style={{ color: '#ef4444' }}>
+                    {loading ? '...' : stats.rejected}
+                  </div>
+                  <div className="stat-label">Rejected</div>
+                </div>
               </div>
             </section>
 
@@ -180,23 +249,31 @@ const CitizenDashboard = () => {
             <section className="recent-reports-section">
               <h2 className="section-title">Recent Reports</h2>
               <div className="reports-list">
-                {recentReports.map((report) => (
-                  <div key={report.id} className="report-item">
-                    <div className="report-content">
-                      <div className={`report-status ${report.status}`}>
-                        {report.status.toUpperCase()}
-                      </div>
-                      <h4 className="report-title">{report.title}</h4>
-                      <div className="report-meta">
-                        <span className="report-type">{report.type}</span>
-                        <span className="report-date">{report.date}</span>
-                      </div>
-                    </div>
-                    <div className={`report-severity ${report.severity}`}>
-                      {report.severity.toUpperCase()}
-                    </div>
+                {loading ? (
+                  <div className="loading-state">Loading your reports...</div>
+                ) : userReports.length === 0 ? (
+                  <div className="empty-state">
+                    <p>No reports yet. Click "Report Hazard" to submit your first report!</p>
                   </div>
-                ))}
+                ) : (
+                  userReports.slice(0, 3).map((report) => (
+                    <div key={report.id} className="report-item">
+                      <div className="report-content">
+                        <div className={`report-status ${report.status}`}>
+                          {report.status.toUpperCase()}
+                        </div>
+                        <h4 className="report-title">{report.title || 'Ocean Hazard Report'}</h4>
+                        <div className="report-meta">
+                          <span className="report-type">{report.type.replace('_', ' ')}</span>
+                          <span className="report-date">{new Date(report.reportedAt).toLocaleDateString()}</span>
+                        </div>
+                      </div>
+                      <div className={`report-severity ${report.severity}`}>
+                        {report.severity.toUpperCase()}
+                      </div>
+                    </div>
+                  ))
+                )}
               </div>
             </section>
           </>
@@ -206,27 +283,73 @@ const CitizenDashboard = () => {
           <section className="reports-tab">
             <div className="reports-header">
               <h2>Your Reports</h2>
-              <button className="new-report-button">+ New Report</button>
+              <button 
+                className="new-report-button"
+                onClick={() => setShowCreateReport(true)}
+              >
+                + New Report
+              </button>
             </div>
             <div className="reports-list">
-              {recentReports.map((report) => (
-                <div key={report.id} className="report-card">
-                  <div className={`report-status ${report.status}`}>
-                    {report.status.toUpperCase()}
-                  </div>
-                  <h3 className="report-title">{report.title}</h3>
-                  <div className="report-details">
-                    <span className="report-type">{report.type}</span>
-                    <span className="report-date">{report.date}</span>
-                  </div>
-                  <div className={`report-severity ${report.severity}`}>
-                    {report.severity.toUpperCase()}
-                  </div>
+              {loading ? (
+                <div className="loading-state">Loading your reports...</div>
+              ) : userReports.length === 0 ? (
+                <div className="empty-state">
+                  <p>No reports yet. Submit your first hazard report!</p>
+                  <button 
+                    className="new-report-button"
+                    onClick={() => setShowCreateReport(true)}
+                  >
+                    + Create Your First Report
+                  </button>
                 </div>
-              ))}
+              ) : (
+                userReports.map((report) => (
+                  <div key={report.id} className="report-card">
+                    <div className={`report-status ${report.status}`}>
+                      {report.status.toUpperCase()}
+                    </div>
+                    <h3 className="report-title">{report.title || 'Ocean Hazard Report'}</h3>
+                    <div className="report-details">
+                      <span className="report-type">{report.type.replace('_', ' ')}</span>
+                      <span className="report-date">{new Date(report.reportedAt).toLocaleDateString()}</span>
+                    </div>
+                    <div className={`report-severity ${report.severity}`}>
+                      {report.severity.toUpperCase()}
+                    </div>
+                    {report.description && (
+                      <p className="report-description">{report.description}</p>
+                    )}
+                    {report.images && report.images.length > 0 && (
+                      <div className="report-images">
+                        {report.images.slice(0, 3).map((imageUrl, index) => (
+                          <img 
+                            key={index} 
+                            src={imageUrl} 
+                            alt={`Report image ${index + 1}`}
+                            className="report-image-thumbnail"
+                          />
+                        ))}
+                        {report.images.length > 3 && (
+                          <span className="more-images">+{report.images.length - 3} more</span>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                ))
+              )}
             </div>
           </section>
         )}
+      </main>
+
+      {/* Create Report Modal */}
+      {showCreateReport && (
+        <CreateReportForm
+          onClose={() => setShowCreateReport(false)}
+          onSuccess={handleReportSuccess}
+        />
+      )}
       </main>
     </div>
   );
