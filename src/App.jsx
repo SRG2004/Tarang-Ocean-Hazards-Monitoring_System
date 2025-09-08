@@ -2,6 +2,7 @@ import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
 import { AppProvider } from './contexts/AppContext';
+import Navigation from './components/Navigation';
 import HomePage from './pages/HomePage';
 import CitizenDashboard from './pages/CitizenDashboard';
 import AnalyticsDashboard from './pages/AnalyticsDashboard';
@@ -50,6 +51,7 @@ export default function App() {
                 },
               }}
             />
+            <Navigation />
             <Routes>
               <Route path="/" element={<HomePage />} />
               <Route path="/login" element={<LoginPage />} />

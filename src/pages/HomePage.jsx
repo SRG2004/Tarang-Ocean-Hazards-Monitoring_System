@@ -36,7 +36,7 @@ const HomePage = () => {
       subtitle: 'Interactive View',
       color: '#ec4899',
       icon: '🗺️',
-      onClick: () => navigate('/citizen')
+      onClick: () => navigate('/map')
     },
     {
       id: 'support',
