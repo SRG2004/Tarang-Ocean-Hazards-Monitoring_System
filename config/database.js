@@ -1,13 +1,12 @@
 /**
- * Database Configuration and Connection Management
- * Supports both MongoDB and Firebase with automatic fallback
+ * Firebase Database Configuration
+ * Primary database for Taranga Ocean Hazard Monitoring System
  */
 
 import { initializeApp } from 'firebase/app';
-import { getFirestore, connectFirestoreEmulator } from 'firebase/firestore';
+import { getFirestore } from 'firebase/firestore';
 import { getAuth } from 'firebase/auth';
 import { getStorage } from 'firebase/storage';
-import mongoose from 'mongoose';
 
 // Firebase configuration
 const firebaseConfig = {
@@ -27,107 +26,26 @@ try {
   db = getFirestore(firebaseApp);
   auth = getAuth(firebaseApp);
   storage = getStorage(firebaseApp);
-  
+
   console.log('✅ Firebase initialized successfully');
 } catch (error) {
   console.error('❌ Firebase initialization failed:', error.message);
 }
 
-// MongoDB connection setup (backup database)
-let mongoConnection = null;
-
-const connectMongoDB = async () => {
-  if (process.env.MONGODB_URI) {
-    try {
-      await mongoose.connect(process.env.MONGODB_URI, {
-        useNewUrlParser: true,
-        useUnifiedTopology: true,
-        maxPoolSize: 10,
-        serverSelectionTimeoutMS: 5000,
-        socketTimeoutMS: 45000,
-      });
-      
-      mongoConnection = mongoose.connection;
-      console.log('✅ MongoDB connected successfully');
-      
-      // MongoDB event handlers
-      mongoConnection.on('error', (err) => {
-        console.error('MongoDB connection error:', err);
-      });
-      
-      mongoConnection.on('disconnected', () => {
-        console.log('MongoDB disconnected');
-      });
-      
-      return true;
-    } catch (error) {
-      console.error('❌ MongoDB connection failed:', error.message);
-      return false;
-    }
-  }
-  return false;
-};
-
-// PostgreSQL setup (if available from Replit)
-let pgConnection = null;
-
-const connectPostgreSQL = async () => {
-  if (process.env.DATABASE_URL) {
-    try {
-      // Note: Would use pg library if PostgreSQL is preferred
-      // const { Pool } = await import('pg');
-      // pgConnection = new Pool({
-      //   connectionString: process.env.DATABASE_URL,
-      //   ssl: process.env.NODE_ENV === 'production'
-      // });
-      
-      console.log('✅ PostgreSQL connection available');
-      return true;
-    } catch (error) {
-      console.error('❌ PostgreSQL connection failed:', error.message);
-      return false;
-    }
-  }
-  return false;
-};
-
 // Main database connection function
 export const connectDatabase = async () => {
-  const databases = [];
-  
-  // Try Firebase first (primary database)
-  if (firebaseApp && db) {
-    databases.push({ name: 'Firebase', status: 'connected' });
+  if (!firebaseApp || !db) {
+    throw new Error('Firebase initialization failed. Please check your configuration.');
   }
-  
-  // Try MongoDB as backup
-  const mongoConnected = await connectMongoDB();
-  if (mongoConnected) {
-    databases.push({ name: 'MongoDB', status: 'connected' });
-  }
-  
-  // Try PostgreSQL if available
-  const pgConnected = await connectPostgreSQL();
-  if (pgConnected) {
-    databases.push({ name: 'PostgreSQL', status: 'available' });
-  }
-  
-  if (databases.length === 0) {
-    throw new Error('No database connections available');
-  }
-  
-  console.log('📊 Database connections:', databases);
-  return databases;
+
+  console.log('📊 Firebase database connected successfully');
+  return [{ name: 'Firebase', status: 'connected' }];
 };
 
 // Database health check
 export const checkDatabaseHealth = async () => {
-  const health = {
-    firebase: false,
-    mongodb: false,
-    postgresql: false
-  };
-  
+  const health = { firebase: false };
+
   // Check Firebase
   if (db) {
     try {
@@ -137,31 +55,14 @@ export const checkDatabaseHealth = async () => {
       console.error('Firebase health check failed:', error);
     }
   }
-  
-  // Check MongoDB
-  if (mongoConnection && mongoConnection.readyState === 1) {
-    health.mongodb = true;
-  }
-  
-  // Check PostgreSQL
-  if (pgConnection) {
-    try {
-      // await pgConnection.query('SELECT 1');
-      health.postgresql = true;
-    } catch (error) {
-      console.error('PostgreSQL health check failed:', error);
-    }
-  }
-  
+
   return health;
 };
 
 // Export database instances
-export { 
-  firebaseApp, 
-  db as firestore, 
-  auth, 
-  storage,
-  mongoConnection,
-  pgConnection
+export {
+  firebaseApp,
+  db as firestore,
+  auth,
+  storage
 };

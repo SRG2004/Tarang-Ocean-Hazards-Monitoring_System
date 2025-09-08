@@ -1,43 +1,123 @@
-import { 
-  collection, 
-  addDoc, 
-  getDocs, 
-  doc, 
-  updateDoc,
-  query,
-  orderBy,
-  where,
-  limit,
-  onSnapshot
-} from 'firebase/firestore';
-import { db } from '../config/firebase';
+import axios from 'axios';
 import toast from 'react-hot-toast';
 
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
+
 export const notificationService = {
-  // Send notification
+  // Get auth headers
+  getAuthHeaders() {
+    const token = localStorage.getItem('authToken');
+    return token ? { Authorization: `Bearer ${token}` } : {};
+  },
+
+  // Get notifications for user
+  async getNotifications(filters = {}) {
+    try {
+      const params = new URLSearchParams();
+
+      // Add filters to query params
+      Object.keys(filters).forEach(key => {
+        if (filters[key] !== undefined && filters[key] !== null) {
+          params.append(key, filters[key]);
+        }
+      });
+
+      const response = await axios.get(`${API_BASE_URL}/notifications?${params}`, {
+        headers: this.getAuthHeaders()
+      });
+
+      return response.data.notifications || [];
+    } catch (error) {
+      console.error('Error getting notifications:', error);
+      throw new Error(error.response?.data?.error || 'Failed to get notifications');
+    }
+  },
+
+  // Get specific notification
+  async getNotification(notificationId) {
+    try {
+      const response = await axios.get(`${API_BASE_URL}/notifications/${notificationId}`, {
+        headers: this.getAuthHeaders()
+      });
+
+      return response.data.notification;
+    } catch (error) {
+      console.error('Error getting notification:', error);
+      throw new Error(error.response?.data?.error || 'Failed to get notification');
+    }
+  },
+
+  // Send notification (admin/official only)
   async sendNotification(notificationData) {
     try {
-      const notification = {
-        ...notificationData,
-        id: `notif_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-        timestamp: new Date().toISOString(),
-        read: false,
-        delivered: false,
-        type: notificationData.type || 'info',
-        priority: notificationData.priority || 'medium'
+      const response = await axios.post(`${API_BASE_URL}/notifications`, notificationData, {
+        headers: this.getAuthHeaders()
+      });
+
+      return {
+        success: true,
+        message: response.data.message,
+        recipients: response.data.recipients
       };
-
-      const docRef = await addDoc(collection(db, 'notifications'), notification);
-      
-      // Send real-time notification if user is online
-      if (notification.userId) {
-        this.sendRealTimeNotification(notification);
-      }
-
-      return { success: true, notificationId: docRef.id, data: notification };
     } catch (error) {
       console.error('Error sending notification:', error);
-      throw error;
+      throw new Error(error.response?.data?.error || 'Failed to send notification');
+    }
+  },
+
+  // Mark notification as read
+  async markAsRead(notificationId) {
+    try {
+      const response = await axios.put(`${API_BASE_URL}/notifications/${notificationId}/read`, {}, {
+        headers: this.getAuthHeaders()
+      });
+
+      return { success: true, message: response.data.message };
+    } catch (error) {
+      console.error('Error marking notification as read:', error);
+      throw new Error(error.response?.data?.error || 'Failed to mark notification as read');
+    }
+  },
+
+  // Mark all notifications as read
+  async markAllAsRead() {
+    try {
+      const response = await axios.put(`${API_BASE_URL}/notifications/read-all`, {}, {
+        headers: this.getAuthHeaders()
+      });
+
+      return { success: true, message: response.data.message };
+    } catch (error) {
+      console.error('Error marking all notifications as read:', error);
+      throw new Error(error.response?.data?.error || 'Failed to mark notifications as read');
+    }
+  },
+
+  // Delete notification
+  async deleteNotification(notificationId) {
+    try {
+      const response = await axios.delete(`${API_BASE_URL}/notifications/${notificationId}`, {
+        headers: this.getAuthHeaders()
+      });
+
+      return { success: true, message: response.data.message };
+    } catch (error) {
+      console.error('Error deleting notification:', error);
+      throw new Error(error.response?.data?.error || 'Failed to delete notification');
+    }
+  },
+
+  // Get notification statistics
+  async getNotificationStats() {
+    try {
+      const response = await axios.get(`${API_BASE_URL}/notifications/stats`, {
+        headers: this.getAuthHeaders()
+      });
+
+      return response.data.stats || {};
+    } catch (error) {
+      console.error('Error getting notification stats:', error);
+      return {};
     }
   },
 
@@ -64,81 +144,33 @@ export const notificationService = {
     }
   },
 
-  // Get notifications for user
-  async getNotifications(userId, filters = {}) {
-    try {
-      let q = collection(db, 'notifications');
-      
-      if (userId) {
-        q = query(q, where('userId', '==', userId));
-      }
-      
-      if (filters.read !== undefined) {
-        q = query(q, where('read', '==', filters.read));
-      }
-      
-      if (filters.type) {
-        q = query(q, where('type', '==', filters.type));
-      }
+  // Subscribe to real-time notifications (simplified for API)
+  subscribeToNotifications(callback) {
+    // For API-based approach, we'll use polling
+    const pollNotifications = async () => {
+      try {
+        const notifications = await this.getNotifications({ unreadOnly: true });
+        callback(notifications);
 
-      q = query(q, orderBy('timestamp', 'desc'));
-
-      if (filters.limit) {
-        q = query(q, limit(filters.limit));
-      }
-
-      const querySnapshot = await getDocs(q);
-      const notifications = [];
-      querySnapshot.forEach((doc) => {
-        notifications.push({ id: doc.id, ...doc.data() });
-      });
-
-      return notifications;
-    } catch (error) {
-      console.error('Error getting notifications:', error);
-      throw error;
-    }
-  },
-
-  // Mark notification as read
-  async markAsRead(notificationId) {
-    try {
-      const notificationRef = doc(db, 'notifications', notificationId);
-      await updateDoc(notificationRef, {
-        read: true,
-        readAt: new Date().toISOString()
-      });
-      return { success: true };
-    } catch (error) {
-      console.error('Error marking notification as read:', error);
-      throw error;
-    }
-  },
-
-  // Subscribe to real-time notifications
-  subscribeToNotifications(userId, callback) {
-    const q = query(
-      collection(db, 'notifications'),
-      where('userId', '==', userId),
-      where('read', '==', false),
-      orderBy('timestamp', 'desc')
-    );
-
-    return onSnapshot(q, (querySnapshot) => {
-      const notifications = [];
-      querySnapshot.forEach((doc) => {
-        const notification = { id: doc.id, ...doc.data() };
-        notifications.push(notification);
-        
         // Show toast for new notifications
-        if (!notification.delivered) {
-          this.sendRealTimeNotification(notification);
-          // Mark as delivered
-          updateDoc(doc.ref, { delivered: true });
-        }
-      });
-      callback(notifications);
-    });
+        notifications.forEach(notification => {
+          if (!notification.delivered) {
+            this.sendRealTimeNotification(notification);
+          }
+        });
+      } catch (error) {
+        console.error('Error polling notifications:', error);
+      }
+    };
+
+    // Initial call
+    pollNotifications();
+
+    // Set up polling interval (every 30 seconds)
+    const interval = setInterval(pollNotifications, 30000);
+
+    // Return unsubscribe function
+    return () => clearInterval(interval);
   },
 
   // Send hazard alert

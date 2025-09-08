@@ -3,6 +3,7 @@ import { MapContainer, TileLayer, Marker, Popup, Circle, useMap } from 'react-le
 import { Icon } from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import './InteractiveMap.css';
+import { hazardReportService } from '../services/hazardReportService';
 
 // Fix for default markers in react-leaflet
 delete Icon.Default.prototype._getIconUrl;
@@ -72,15 +73,16 @@ const MapUpdater = ({ center, zoom }) => {
   return null;
 };
 
-const InteractiveMap = ({ 
-  reports = [], 
-  alerts = [], 
+const InteractiveMap = ({
+  reports: propReports = [],
+  alerts: propAlerts = [],
   onReportClick,
   onMapClick,
   showHeatmap = true,
   center = [13.0827, 80.2707], // Chennai coordinates
   zoom = 8,
-  height = '500px'
+  height = '500px',
+  enableRealTime = true
 }) => {
   const [mapCenter, setMapCenter] = useState(center);
   const [mapZoom, setMapZoom] = useState(zoom);
@@ -89,65 +91,64 @@ const InteractiveMap = ({
     alerts: true,
     heatmap: showHeatmap
   });
+  const [reports, setReports] = useState(propReports);
+  const [alerts, setAlerts] = useState(propAlerts);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
 
-  // Sample hazard data if no reports provided
-  const sampleReports = reports.length > 0 ? reports : [
-    {
-      id: 1,
-      type: 'cyclone',
-      severity: 'high',
-      title: 'Cyclone Warning - Bay of Bengal',
-      coordinates: { lat: 13.0827, lng: 80.2707 },
-      timestamp: new Date().toISOString(),
-      status: 'active'
-    },
-    {
-      id: 2,
-      type: 'high_waves',
-      severity: 'medium',
-      title: 'High Waves - Marina Beach',
-      coordinates: { lat: 13.0499, lng: 80.2824 },
-      timestamp: new Date().toISOString(),
-      status: 'verified'
-    },
-    {
-      id: 3,
-      type: 'strong_currents',
-      severity: 'high',
-      title: 'Strong Currents - Visakhapatnam',
-      coordinates: { lat: 17.6868, lng: 83.2185 },
-      timestamp: new Date().toISOString(),
-      status: 'active'
-    },
-    {
-      id: 4,
-      type: 'tsunami',
-      severity: 'critical',
-      title: 'Tsunami Alert - Kochi',
-      coordinates: { lat: 9.9312, lng: 76.2673 },
-      timestamp: new Date().toISOString(),
-      status: 'critical'
+  // Load reports from API
+  const loadReports = async (filters = {}) => {
+    try {
+      setLoading(true);
+      setError(null);
+      const fetchedReports = await hazardReportService.getReports(filters);
+      setReports(fetchedReports);
+    } catch (err) {
+      console.error('Error loading reports:', err);
+      setError('Failed to load hazard reports');
+      // Fallback to prop reports if available
+      if (propReports.length > 0) {
+        setReports(propReports);
+      }
+    } finally {
+      setLoading(false);
     }
-  ];
+  };
 
-  const sampleAlerts = alerts.length > 0 ? alerts : [
-    {
-      id: 1,
-      type: 'evacuation',
-      coordinates: { lat: 13.0827, lng: 80.2707 },
-      radius: 10000, // 10km
-      message: 'Evacuation zone - Cyclone approach',
-      severity: 'critical'
-    },
-    {
-      id: 2,
-      type: 'warning',
-      coordinates: { lat: 17.6868, lng: 83.2185 },
-      radius: 5000, // 5km
-      message: 'High wave warning zone',
-      severity: 'medium'
+  // Load nearby reports based on current map center
+  const loadNearbyReports = async (lat, lng, radius = 50) => {
+    try {
+      const nearbyReports = await hazardReportService.getReportsByLocation(lat, lng, radius);
+      setReports(nearbyReports);
+    } catch (err) {
+      console.error('Error loading nearby reports:', err);
     }
-  ];
+  };
+
+  // Set up real-time updates
+  useEffect(() => {
+    if (enableRealTime) {
+      const unsubscribe = hazardReportService.subscribeToReports((updatedReports) => {
+        setReports(updatedReports);
+      });
+
+      return unsubscribe;
+    }
+  }, [enableRealTime]);
+
+  // Load initial data
+  useEffect(() => {
+    if (propReports.length === 0) {
+      loadReports();
+    } else {
+      setReports(propReports);
+    }
+  }, [propReports]);
+
+  // Update alerts when prop changes
+  useEffect(() => {
+    setAlerts(propAlerts);
+  }, [propAlerts]);
 
   const handleLayerToggle = (layer) => {
     setSelectedLayers(prev => ({
@@ -260,7 +261,7 @@ const InteractiveMap = ({
           />
 
           {/* Hazard Reports */}
-          {selectedLayers.reports && sampleReports.map((report) => (
+          {selectedLayers.reports && reports.map((report) => (
             <Marker
               key={report.id}
               position={[report.coordinates.lat, report.coordinates.lng]}
@@ -275,9 +276,12 @@ const InteractiveMap = ({
                   <p><strong>Type:</strong> {report.type.replace('_', ' ')}</p>
                   <p><strong>Severity:</strong> {report.severity}</p>
                   <p><strong>Status:</strong> {report.status}</p>
-                  <p><strong>Time:</strong> {new Date(report.timestamp).toLocaleString()}</p>
+                  <p><strong>Time:</strong> {new Date(report.createdAt).toLocaleString()}</p>
                   {report.description && (
                     <p><strong>Details:</strong> {report.description}</p>
+                  )}
+                  {report.userInfo && (
+                    <p><strong>Reported by:</strong> {report.userInfo.name}</p>
                   )}
                 </div>
               </Popup>
@@ -285,7 +289,7 @@ const InteractiveMap = ({
           ))}
 
           {/* Alert Zones */}
-          {selectedLayers.alerts && sampleAlerts.map((alert) => (
+          {selectedLayers.alerts && alerts.map((alert) => (
             <Circle
               key={alert.id}
               center={[alert.coordinates.lat, alert.coordinates.lng]}
@@ -311,19 +315,31 @@ const InteractiveMap = ({
       {/* Map Statistics */}
       <div className="map-stats">
         <div className="stat-item">
-          <span className="stat-value">{sampleReports.length}</span>
+          <span className="stat-value">{reports.length}</span>
           <span className="stat-label">Active Reports</span>
         </div>
         <div className="stat-item">
-          <span className="stat-value">{sampleAlerts.length}</span>
+          <span className="stat-value">{alerts.length}</span>
           <span className="stat-label">Alert Zones</span>
         </div>
         <div className="stat-item">
           <span className="stat-value">
-            {sampleReports.filter(r => r.severity === 'critical' || r.severity === 'high').length}
+            {reports.filter(r => r.severity === 'critical' || r.severity === 'high').length}
           </span>
           <span className="stat-label">High Priority</span>
         </div>
+        {loading && (
+          <div className="stat-item">
+            <span className="stat-value">⟳</span>
+            <span className="stat-label">Loading...</span>
+          </div>
+        )}
+        {error && (
+          <div className="stat-item error">
+            <span className="stat-value">⚠️</span>
+            <span className="stat-label">Error</span>
+          </div>
+        )}
       </div>
     </div>
   );

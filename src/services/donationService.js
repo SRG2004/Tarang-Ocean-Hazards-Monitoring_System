@@ -1,155 +1,83 @@
-import { 
-  collection, 
-  addDoc, 
-  getDocs, 
-  doc, 
-  updateDoc,
-  query,
-  orderBy,
-  where,
-  limit 
-} from 'firebase/firestore';
-import { db } from '../config/firebase';
+import axios from 'axios';
+
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
 
 export const donationService = {
+  // Get auth headers
+  getAuthHeaders() {
+    const token = localStorage.getItem('authToken');
+    return token ? { Authorization: `Bearer ${token}` } : {};
+  },
+
   // Process donation
   async processDonation(donationData) {
     try {
-      const donation = {
-        ...donationData,
-        id: `donation_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-        timestamp: new Date().toISOString(),
-        status: 'pending',
-        amount: parseFloat(donationData.amount) || 0,
-        currency: donationData.currency || 'INR',
-        paymentMethod: donationData.paymentMethod || 'online',
-        receiptGenerated: false
-      };
+      const response = await axios.post(`${API_BASE_URL}/donations`, donationData, {
+        headers: this.getAuthHeaders()
+      });
 
-      // Simulate payment processing
-      const paymentResult = await this.processPayment(donation);
-      
-      if (paymentResult.success) {
-        donation.status = 'confirmed';
-        donation.paymentId = paymentResult.paymentId;
-        donation.receiptGenerated = donationData.receipt || false;
-      }
-
-      const docRef = await addDoc(collection(db, 'donations'), donation);
-      
-      // Update campaign statistics
-      await this.updateCampaignStats(donation);
-      
-      return { 
-        success: true, 
-        donationId: docRef.id, 
-        data: donation,
-        paymentResult 
+      return {
+        success: true,
+        donationId: response.data.donation.id,
+        data: response.data.donation,
+        paymentResult: response.data.paymentResult
       };
     } catch (error) {
       console.error('Error processing donation:', error);
-      throw error;
+      throw new Error(error.response?.data?.error || 'Failed to process donation');
     }
-  },
-
-  // Simulate payment processing
-  async processPayment(donation) {
-    // Simulate payment gateway integration
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        const success = Math.random() > 0.1; // 90% success rate
-        resolve({
-          success,
-          paymentId: success ? `pay_${Date.now()}_${Math.random().toString(36).substr(2, 9)}` : null,
-          message: success ? 'Payment processed successfully' : 'Payment failed'
-        });
-      }, 1000);
-    });
   },
 
   // Get donations
   async getDonations(filters = {}) {
     try {
-      let q = collection(db, 'donations');
+      const params = new URLSearchParams();
 
-      if (filters.status) {
-        q = query(q, where('status', '==', filters.status));
-      }
-      if (filters.userId) {
-        q = query(q, where('userId', '==', filters.userId));
-      }
-      if (filters.campaignId) {
-        q = query(q, where('campaignId', '==', filters.campaignId));
-      }
-
-      q = query(q, orderBy('timestamp', 'desc'));
-
-      if (filters.limit) {
-        q = query(q, limit(filters.limit));
-      }
-
-      const querySnapshot = await getDocs(q);
-      const donations = [];
-      querySnapshot.forEach((doc) => {
-        donations.push({ id: doc.id, ...doc.data() });
+      // Add filters to query params
+      Object.keys(filters).forEach(key => {
+        if (filters[key] !== undefined && filters[key] !== null) {
+          params.append(key, filters[key]);
+        }
       });
 
-      return donations;
+      const response = await axios.get(`${API_BASE_URL}/donations?${params}`, {
+        headers: this.getAuthHeaders()
+      });
+
+      return response.data.donations || [];
     } catch (error) {
       console.error('Error getting donations:', error);
-      throw error;
+      throw new Error(error.response?.data?.error || 'Failed to get donations');
+    }
+  },
+
+  // Get specific donation
+  async getDonation(donationId) {
+    try {
+      const response = await axios.get(`${API_BASE_URL}/donations/${donationId}`, {
+        headers: this.getAuthHeaders()
+      });
+
+      return response.data.donation;
+    } catch (error) {
+      console.error('Error getting donation:', error);
+      throw new Error(error.response?.data?.error || 'Failed to get donation');
     }
   },
 
   // Get donation statistics
   async getDonationStats() {
     try {
-      const donations = await this.getDonations({ status: 'confirmed' });
-      
-      const stats = {
-        totalAmount: 0,
-        totalDonations: donations.length,
-        uniqueDonors: new Set(),
-        thisMonth: 0,
-        byType: {
-          monetary: 0,
-          supplies: 0,
-          services: 0
-        }
-      };
-
-      const thisMonth = new Date().getMonth();
-      const thisYear = new Date().getFullYear();
-
-      donations.forEach(donation => {
-        // Total amount
-        if (donation.type === 'monetary' || donation.type === 'Monetary') {
-          stats.totalAmount += donation.amount;
-        }
-        
-        // Unique donors
-        if (donation.userId) {
-          stats.uniqueDonors.add(donation.userId);
-        }
-        
-        // This month donations
-        const donationDate = new Date(donation.timestamp);
-        if (donationDate.getMonth() === thisMonth && donationDate.getFullYear() === thisYear) {
-          if (donation.type === 'monetary' || donation.type === 'Monetary') {
-            stats.thisMonth += donation.amount;
-          }
-        }
-        
-        // By type
-        const type = (donation.type || 'monetary').toLowerCase();
-        if (stats.byType.hasOwnProperty(type)) {
-          stats.byType[type]++;
-        }
+      const response = await axios.get(`${API_BASE_URL}/donations/stats`, {
+        headers: this.getAuthHeaders()
       });
 
-      return {
-        ...stats,
-        uniqueDonors: stats.uniqueDonors.size
+      return response.data.stats || {
+        totalAmount: 0,
+        totalDonations: 0,
+        uniqueDonors: 0,
+        thisMonth: 0,
+        byType: { monetary: 0, supplies: 0, services: 0 }
       };
     } catch (error) {
       console.error('Error getting donation stats:', error);
@@ -166,89 +94,104 @@ export const donationService = {
   // Create resource request
   async createResourceRequest(requestData) {
     try {
-      const request = {
-        ...requestData,
-        id: `request_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-        timestamp: new Date().toISOString(),
-        status: 'active',
-        fulfilled: false,
-        priority: requestData.priority || 'medium',
-        itemsReceived: {},
-        totalDonationsReceived: 0
-      };
+      const response = await axios.post(`${API_BASE_URL}/donations/resource-requests`, requestData, {
+        headers: this.getAuthHeaders()
+      });
 
-      const docRef = await addDoc(collection(db, 'resourceRequests'), request);
-      return { success: true, requestId: docRef.id, data: request };
+      return {
+        success: true,
+        requestId: response.data.request.id,
+        data: response.data.request
+      };
     } catch (error) {
       console.error('Error creating resource request:', error);
-      throw error;
+      throw new Error(error.response?.data?.error || 'Failed to create resource request');
     }
   },
 
   // Get resource requests
   async getResourceRequests(filters = {}) {
     try {
-      let q = collection(db, 'resourceRequests');
+      const params = new URLSearchParams();
 
-      if (filters.status) {
-        q = query(q, where('status', '==', filters.status));
-      }
-      if (filters.priority) {
-        q = query(q, where('priority', '==', filters.priority));
-      }
-
-      q = query(q, orderBy('timestamp', 'desc'));
-
-      if (filters.limit) {
-        q = query(q, limit(filters.limit));
-      }
-
-      const querySnapshot = await getDocs(q);
-      const requests = [];
-      querySnapshot.forEach((doc) => {
-        requests.push({ id: doc.id, ...doc.data() });
+      // Add filters to query params
+      Object.keys(filters).forEach(key => {
+        if (filters[key] !== undefined && filters[key] !== null) {
+          params.append(key, filters[key]);
+        }
       });
 
-      return requests;
+      const response = await axios.get(`${API_BASE_URL}/donations/resource-requests?${params}`, {
+        headers: this.getAuthHeaders()
+      });
+
+      return response.data.requests || [];
     } catch (error) {
       console.error('Error getting resource requests:', error);
-      throw error;
+      throw new Error(error.response?.data?.error || 'Failed to get resource requests');
     }
   },
 
-  // Update campaign statistics
-  async updateCampaignStats(donation) {
+  // Update resource request
+  async updateResourceRequest(requestId, updateData) {
     try {
-      // Update global campaign stats
-      const campaignId = donation.campaignId || 'general_emergency_fund';
-      // This would typically update campaign-specific statistics
-      console.log(`Updated stats for campaign: ${campaignId}`);
+      const response = await axios.put(`${API_BASE_URL}/donations/resource-requests/${requestId}`, updateData, {
+        headers: this.getAuthHeaders()
+      });
+
+      return {
+        success: true,
+        message: response.data.message,
+        data: response.data.request
+      };
     } catch (error) {
-      console.error('Error updating campaign stats:', error);
+      console.error('Error updating resource request:', error);
+      throw new Error(error.response?.data?.error || 'Failed to update resource request');
     }
   },
 
   // Generate receipt
   async generateReceipt(donationId) {
     try {
-      // This would generate a PDF receipt in a real implementation
-      const receiptData = {
-        receiptId: `receipt_${donationId}_${Date.now()}`,
-        generatedAt: new Date().toISOString(),
-        donationId
-      };
-
-      // Update donation record
-      const donationRef = doc(db, 'donations', donationId);
-      await updateDoc(donationRef, {
-        receiptGenerated: true,
-        receiptData
+      const response = await axios.post(`${API_BASE_URL}/donations/${donationId}/receipt`, {}, {
+        headers: this.getAuthHeaders()
       });
 
-      return receiptData;
+      return response.data.receipt;
     } catch (error) {
       console.error('Error generating receipt:', error);
-      throw error;
+      throw new Error(error.response?.data?.error || 'Failed to generate receipt');
     }
+  },
+
+  // Get payment methods
+  getPaymentMethods() {
+    return [
+      { value: 'online', label: 'Online Payment' },
+      { value: 'upi', label: 'UPI' },
+      { value: 'card', label: 'Credit/Debit Card' },
+      { value: 'netbanking', label: 'Net Banking' },
+      { value: 'wallet', label: 'Digital Wallet' }
+    ];
+  },
+
+  // Get donation types
+  getDonationTypes() {
+    return [
+      { value: 'monetary', label: 'Monetary Donation' },
+      { value: 'supplies', label: 'Supplies & Equipment' },
+      { value: 'services', label: 'Services & Support' },
+      { value: 'volunteer', label: 'Volunteer Time' }
+    ];
+  },
+
+  // Get currencies
+  getCurrencies() {
+    return [
+      { value: 'INR', label: 'Indian Rupee (INR)' },
+      { value: 'USD', label: 'US Dollar (USD)' },
+      { value: 'EUR', label: 'Euro (EUR)' },
+      { value: 'GBP', label: 'British Pound (GBP)' }
+    ];
   }
 };

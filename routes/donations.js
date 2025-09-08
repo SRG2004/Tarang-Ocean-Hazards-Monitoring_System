@@ -15,9 +15,7 @@ import {
   query,
   where,
   orderBy,
-  limit,
-  aggregate,
-  sum
+  limit
 } from 'firebase/firestore';
 import { firestore } from '../config/database.js';
 

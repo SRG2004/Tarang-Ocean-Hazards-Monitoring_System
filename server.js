@@ -208,12 +208,20 @@ app.use((err, req, res, next) => {
   });
 });
 
-// 404 handler
-app.use('*', (req, res) => {
-  res.status(404).json({
-    error: 'Route not found',
-    path: req.originalUrl
-  });
+// Serve frontend static files
+app.use(express.static(path.join(__dirname, 'dist')));
+
+// Fallback to index.html for SPA routes (non-API routes)
+
+// Catch-all for SPA routing (non-API routes)
+app.use((req, res, next) => {
+  if (req.path.startsWith('/api')) {
+    return res.status(404).json({
+      error: 'API route not found',
+      path: req.originalUrl
+    });
+  }
+  res.sendFile(path.join(__dirname, 'dist', 'index.html'));
 });
 
 /**

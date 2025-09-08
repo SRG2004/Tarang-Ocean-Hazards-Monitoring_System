@@ -1,29 +1,111 @@
-import Sentiment from 'sentiment';
-import { collection, addDoc, getDocs, query, orderBy, where, limit } from 'firebase/firestore';
-import { db } from '../config/firebase';
+import axios from 'axios';
 
-const sentiment = new Sentiment();
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
 
 export const socialMediaService = {
-  // Analyze sentiment of text
+  // Get auth headers
+  getAuthHeaders() {
+    const token = localStorage.getItem('authToken');
+    return token ? { Authorization: `Bearer ${token}` } : {};
+  },
+
+  // Get social media posts from API
+  async getSocialMediaPosts(filters = {}) {
+    try {
+      const params = new URLSearchParams();
+
+      // Add filters to query params
+      Object.keys(filters).forEach(key => {
+        if (filters[key] !== undefined && filters[key] !== null) {
+          params.append(key, filters[key]);
+        }
+      });
+
+      const response = await axios.get(`${API_BASE_URL}/social-media/posts?${params}`, {
+        headers: this.getAuthHeaders()
+      });
+
+      return response.data.posts || [];
+    } catch (error) {
+      console.error('Error getting social media posts:', error);
+      throw new Error(error.response?.data?.error || 'Failed to get social media posts');
+    }
+  },
+
+  // Get trending topics
+  async getTrendingTopics(limit = 10) {
+    try {
+      const response = await axios.get(`${API_BASE_URL}/social-media/trending`, {
+        params: { limit },
+        headers: this.getAuthHeaders()
+      });
+
+      return response.data.trending || [];
+    } catch (error) {
+      console.error('Error getting trending topics:', error);
+      throw new Error(error.response?.data?.error || 'Failed to get trending topics');
+    }
+  },
+
+  // Get sentiment statistics
+  async getSentimentStats() {
+    try {
+      const response = await axios.get(`${API_BASE_URL}/social-media/sentiment-stats`, {
+        headers: this.getAuthHeaders()
+      });
+
+      return response.data.stats || { positive: 0, negative: 0, neutral: 0, total: 0 };
+    } catch (error) {
+      console.error('Error getting sentiment stats:', error);
+      return { positive: 0, negative: 0, neutral: 0, total: 0 };
+    }
+  },
+
+  // Get social media analytics
+  async getAnalytics(timeRange = '24h') {
+    try {
+      const response = await axios.get(`${API_BASE_URL}/social-media/analytics`, {
+        params: { timeRange },
+        headers: this.getAuthHeaders()
+      });
+
+      return response.data.analytics || {};
+    } catch (error) {
+      console.error('Error getting social media analytics:', error);
+      throw new Error(error.response?.data?.error || 'Failed to get analytics');
+    }
+  },
+
+  // Analyze sentiment of text (client-side utility)
   analyzeSentiment(text) {
-    const result = sentiment.analyze(text);
-    
-    let sentimentLabel = 'neutral';
-    if (result.score > 2) sentimentLabel = 'positive';
-    else if (result.score < -2) sentimentLabel = 'negative';
-    
+    // Simple sentiment analysis (could be enhanced with a proper library)
+    const positiveWords = ['good', 'safe', 'fine', 'okay', 'normal', 'clear', 'calm'];
+    const negativeWords = ['danger', 'warning', 'alert', 'storm', 'flood', 'tsunami', 'cyclone', 'emergency'];
+
+    const textLower = text.toLowerCase();
+    let score = 0;
+
+    positiveWords.forEach(word => {
+      if (textLower.includes(word)) score += 1;
+    });
+
+    negativeWords.forEach(word => {
+      if (textLower.includes(word)) score -= 2;
+    });
+
+    let label = 'neutral';
+    if (score > 1) label = 'positive';
+    else if (score < -1) label = 'negative';
+
     return {
-      score: result.score,
-      comparative: result.comparative,
-      label: sentimentLabel,
-      positive: result.positive,
-      negative: result.negative,
-      words: result.words
+      score,
+      label,
+      words: [...positiveWords.filter(w => textLower.includes(w)),
+              ...negativeWords.filter(w => textLower.includes(w))]
     };
   },
 
-  // Extract keywords related to ocean hazards
+  // Extract keywords related to ocean hazards (client-side utility)
   extractHazardKeywords(text) {
     const hazardKeywords = [
       'tsunami', 'cyclone', 'storm', 'flood', 'wave', 'surge', 'tide',
@@ -35,7 +117,7 @@ export const socialMediaService = {
 
     const extractedKeywords = [];
     const textLower = text.toLowerCase();
-    
+
     hazardKeywords.forEach(keyword => {
       if (textLower.includes(keyword)) {
         extractedKeywords.push(keyword);
@@ -43,73 +125,6 @@ export const socialMediaService = {
     });
 
     return extractedKeywords;
-  },
-
-  // Process social media post
-  async processSocialMediaPost(postData) {
-    try {
-      const sentimentAnalysis = this.analyzeSentiment(postData.content);
-      const keywords = this.extractHazardKeywords(postData.content);
-      
-      // Calculate relevance score based on hazard keywords
-      const relevanceScore = Math.min(100, (keywords.length * 15) + 
-        (sentimentAnalysis.label === 'negative' ? 20 : 0));
-
-      const processedPost = {
-        ...postData,
-        sentiment: sentimentAnalysis,
-        keywords,
-        relevanceScore,
-        isHazardRelated: keywords.length > 0 || sentimentAnalysis.label === 'negative',
-        processedAt: new Date().toISOString(),
-        id: `post_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
-      };
-
-      // Store in Firestore
-      await addDoc(collection(db, 'socialMediaPosts'), processedPost);
-      
-      return processedPost;
-    } catch (error) {
-      console.error('Error processing social media post:', error);
-      throw error;
-    }
-  },
-
-  // Get processed social media posts
-  async getSocialMediaPosts(filters = {}) {
-    try {
-      let q = collection(db, 'socialMediaPosts');
-
-      // Apply filters
-      if (filters.sentiment) {
-        q = query(q, where('sentiment.label', '==', filters.sentiment));
-      }
-      if (filters.minRelevance) {
-        q = query(q, where('relevanceScore', '>=', filters.minRelevance));
-      }
-      if (filters.isHazardRelated) {
-        q = query(q, where('isHazardRelated', '==', true));
-      }
-
-      // Order by timestamp
-      q = query(q, orderBy('processedAt', 'desc'));
-
-      // Limit results
-      if (filters.limit) {
-        q = query(q, limit(filters.limit));
-      }
-
-      const querySnapshot = await getDocs(q);
-      const posts = [];
-      querySnapshot.forEach((doc) => {
-        posts.push({ id: doc.id, ...doc.data() });
-      });
-
-      return posts;
-    } catch (error) {
-      console.error('Error getting social media posts:', error);
-      throw error;
-    }
   },
 
   // Simulate social media data fetching
