@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://b49cfa40-6e1a-4800-939e-ca2cb741b6cc-00-2t1t4qia4ikak.riker.replit.dev:3001/api';
+const API_BASE_URL = import.meta.env.VITE_API_URL || '/api';
 
 export const authService = {
   // Register a new user
