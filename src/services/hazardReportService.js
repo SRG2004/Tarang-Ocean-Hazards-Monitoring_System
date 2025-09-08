@@ -57,6 +57,17 @@ export const hazardReportService = {
       // For demo purposes, return sample data with filters applied
       let reports = [...sampleHazardReports];
       
+      // Transform data structure to match map component expectations
+      reports = reports.map(report => ({
+        ...report,
+        coordinates: {
+          lat: report.location.latitude,
+          lng: report.location.longitude
+        },
+        createdAt: report.reportedAt,
+        userInfo: report.reportedBy
+      }));
+      
       // Apply filters
       if (filters.status) {
         reports = reports.filter(r => r.status === filters.status);
