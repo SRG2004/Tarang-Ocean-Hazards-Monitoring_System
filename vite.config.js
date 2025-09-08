@@ -8,5 +8,15 @@ export default defineConfig({
     host: '0.0.0.0',
     port: 5000,
     allowedHosts: 'all'
-  }
+  },
+  build: {
+    outDir: 'dist',
+    emptyOutDir: true,
+    rollupOptions: {
+      output: {
+        manualChunks: undefined
+      }
+    }
+  },
+  base: '/'
 })
