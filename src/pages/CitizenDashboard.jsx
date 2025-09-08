@@ -1,13 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../contexts/AuthContext';
+import { useApp } from '../contexts/AppContext';
 import { hazardReportService } from '../services/hazardReportService';
 import CreateReportForm from '../components/CreateReportForm';
 import './CitizenDashboard.css';
 
 const CitizenDashboard = () => {
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user } = useApp();
   const [activeTab, setActiveTab] = useState('dashboard');
   const [showCreateReport, setShowCreateReport] = useState(false);
   const [userReports, setUserReports] = useState([]);

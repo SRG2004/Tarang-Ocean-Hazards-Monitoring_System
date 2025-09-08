@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { hazardReportService } from '../services/hazardReportService';
-import { useAuth } from '../contexts/AuthContext';
+import { useApp } from '../contexts/AppContext';
 import './CreateReportForm.css';
 
 const CreateReportForm = ({ onClose, onSuccess, initialLocation = null }) => {
-  const { user } = useAuth();
+  const { user } = useApp();
   const [loading, setLoading] = useState(false);
   const [locationLoading, setLocationLoading] = useState(false);
   const [formData, setFormData] = useState({
