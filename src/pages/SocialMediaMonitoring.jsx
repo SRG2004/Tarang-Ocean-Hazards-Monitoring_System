@@ -1,95 +1,146 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { socialMediaService } from '../services/socialMediaService';
+import { incoisIntegrationService } from '../services/incoisIntegrationService';
 import './SocialMediaMonitoring.css';
 
 const SocialMediaMonitoring = () => {
   const navigate = useNavigate();
+  const [loading, setLoading] = useState(false);
+  const [socialMediaData, setSocialMediaData] = useState([]);
+  const [sentimentStats, setSentimentStats] = useState({ positive: 0, negative: 0, neutral: 0, total: 0 });
+  const [trendingTopics, setTrendingTopics] = useState([]);
+  const [geographicActivity, setGeographicActivity] = useState([]);
+  const [incoisAlerts, setIncoisAlerts] = useState([]);
   const [filters, setFilters] = useState({
     platform: 'All Platforms',
     sentiment: 'All Sentiments',
     timeframe: 'Last 24 Hours',
-    relevance: 50
+    relevance: 50,
+    region: 'All Regions',
+    hazardType: 'All Hazards'
   });
 
-  const sentimentStats = {
-    positive: 0,
-    negative: 4,
-    neutral: 2,
-    total: 6
+  useEffect(() => {
+    loadSocialMediaData();
+    loadIncoisAlerts();
+  }, []);
+
+  const loadSocialMediaData = async () => {
+    setLoading(true);
+    try {
+      // Load social media posts
+      const posts = await socialMediaService.fetchSimulatedSocialMediaData();
+      setSocialMediaData(posts);
+
+      // Calculate sentiment statistics
+      const stats = posts.reduce((acc, post) => {
+        acc[post.sentiment.label] = (acc[post.sentiment.label] || 0) + 1;
+        acc.total++;
+        return acc;
+      }, { positive: 0, negative: 0, neutral: 0, total: 0 });
+      
+      setSentimentStats(stats);
+
+      // Extract trending topics
+      const keywordCounts = {};
+      posts.forEach(post => {
+        post.keywords.forEach(keyword => {
+          keywordCounts[keyword] = (keywordCounts[keyword] || 0) + 1;
+        });
+      });
+
+      const trending = Object.entries(keywordCounts)
+        .sort(([,a], [,b]) => b - a)
+        .slice(0, 10)
+        .map(([keyword, count]) => ({
+          name: keyword,
+          posts: count,
+          sentiment: calculateTopicSentiment(keyword, posts)
+        }));
+      
+      setTrendingTopics(trending);
+
+      // Extract geographic activity
+      const geoActivity = extractGeographicActivity(posts);
+      setGeographicActivity(geoActivity);
+
+    } catch (error) {
+      console.error('Error loading social media data:', error);
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const trendingTopics = [
-    { name: 'cyclone', posts: 3, sentiment: 'negative' }
-  ];
-
-  const geographicActivity = [
-    { location: 'Chennai', activity: 1 },
-    { location: 'Kerala', activity: 1 },
-    { location: 'Tamil nadu', activity: 1 }
-  ];
-
-  const socialMediaPosts = [
-    {
-      id: 1,
-      platform: '@TheHindu',
-      verified: true,
-      content: 'Cyclone Alert: IMD Issues Warning for East Coast Indian Meteorological Department has issued a cyclone warning for the east coast. Fishermen advised not to venture into the sea.',
-      sentiment: 'NEGATIVE',
-      timestamp: '1h ago',
-      engagement: { likes: 456, shares: 123, comments: 89 },
-      relevance: '95%'
-    },
-    {
-      id: 2,
-      platform: '@IndiaMetDept',
-      verified: true,
-      content: 'IMD issues cyclone warning for Bay of Bengal. Fishermen advised to return to shore immediately. #CycloneAlert #BayOfBengal',
-      sentiment: 'NEGATIVE',
-      timestamp: '1h ago',
-      engagement: { likes: 567, shares: 234, comments: 89 },
-      relevance: '90%'
-    },
-    {
-      id: 3,
-      platform: '@ChennaiWeatherLive',
-      verified: true,
-      content: 'High waves reported at Chennai Marina Beach. Coast Guard advisory issued for fishing vessels. Wave height: 3.5m #ChennaiWeather #MarineAlert',
-      sentiment: 'NEGATIVE',
-      timestamp: '10m ago',
-      engagement: { likes: 245, shares: 67, comments: 23 },
-      relevance: '83%'
-    },
-    {
-      id: 4,
-      platform: '@CoastalResident',
-      verified: false,
-      content: 'Cyclone approaching Bay of Bengal - preparation tips needed Looking for advice on cyclone preparation for coastal areas. First time dealing with this.',
-      sentiment: 'NEUTRAL',
-      timestamp: '3h ago',
-      engagement: { likes: 76, shares: 0, comments: 21 },
-      relevance: '82%'
-    },
-    {
-      id: 5,
-      platform: '@TimesofIndia',
-      verified: true,
-      content: 'High Wave Alert Along Kerala Coast Kerala State Disaster Management Authority issues high wave alert. Coast Guard residents advised to stay away from beaches.',
-      sentiment: 'NEGATIVE',
-      timestamp: '1h ago',
-      engagement: { likes: 234, shares: 67, comments: 34 },
-      relevance: '70%'
-    },
-    {
-      id: 6,
-      platform: '@WeatherWatcher2024',
-      verified: false,
-      content: 'Severe weather conditions reported along Tamil Nadu coast. Any updates from locals?',
-      sentiment: 'NEUTRAL',
-      timestamp: '2h ago',
-      engagement: { likes: 34, shares: 0, comments: 12 },
-      relevance: '70%'
+  const loadIncoisAlerts = async () => {
+    try {
+      const alerts = await incoisIntegrationService.getEarlyWarningData();
+      setIncoisAlerts(alerts.slice(0, 3)); // Show top 3 alerts
+    } catch (error) {
+      console.error('Error loading INCOIS alerts:', error);
     }
-  ];
+  };
+
+  const calculateTopicSentiment = (keyword, posts) => {
+    const relevantPosts = posts.filter(post => 
+      post.keywords.includes(keyword)
+    );
+    
+    if (relevantPosts.length === 0) return 'neutral';
+    
+    const sentimentCounts = relevantPosts.reduce((acc, post) => {
+      acc[post.sentiment.label] = (acc[post.sentiment.label] || 0) + 1;
+      return acc;
+    }, { positive: 0, negative: 0, neutral: 0 });
+    
+    const dominantSentiment = Object.entries(sentimentCounts)
+      .sort(([,a], [,b]) => b - a)[0][0];
+    
+    return dominantSentiment;
+  };
+
+  const extractGeographicActivity = (posts) => {
+    const locationCounts = {};
+    const indianStatesAndCities = [
+      'mumbai', 'chennai', 'kolkata', 'kochi', 'goa', 'visakhapatnam',
+      'gujarat', 'maharashtra', 'kerala', 'tamil nadu', 'andhra pradesh',
+      'odisha', 'west bengal', 'karnataka', 'goa', 'puducherry'
+    ];
+
+    posts.forEach(post => {
+      indianStatesAndCities.forEach(location => {
+        if (post.content.toLowerCase().includes(location)) {
+          locationCounts[location] = (locationCounts[location] || 0) + 1;
+        }
+      });
+    });
+
+    return Object.entries(locationCounts)
+      .sort(([,a], [,b]) => b - a)
+      .slice(0, 8)
+      .map(([location, activity]) => ({
+        location: location.charAt(0).toUpperCase() + location.slice(1),
+        activity
+      }));
+  };
+
+  const refreshData = () => {
+    loadSocialMediaData();
+    loadIncoisAlerts();
+  };
+
+  const filteredPosts = socialMediaData.filter(post => {
+    if (filters.platform !== 'All Platforms' && !post.platform.includes(filters.platform.replace('@', ''))) {
+      return false;
+    }
+    if (filters.sentiment !== 'All Sentiments' && post.sentiment.label !== filters.sentiment.toLowerCase()) {
+      return false;
+    }
+    if (filters.hazardType !== 'All Hazards' && !post.keywords.includes(filters.hazardType.toLowerCase())) {
+      return false;
+    }
+    return true;
+  });
 
   return (
     <div className="social-media-monitoring">
@@ -97,8 +148,8 @@ const SocialMediaMonitoring = () => {
       <header className="monitoring-header">
         <div className="header-content">
           <div className="header-info">
-            <h1 className="page-title">📱 Social Media Monitoring</h1>
-            <p className="page-subtitle">Real-time social media analysis for ocean hazard detection</p>
+            <h1 className="page-title">📱 Social Media Monitoring - INCOIS Enhanced</h1>
+            <p className="page-subtitle">Real-time social media analysis for Indian ocean hazard detection with multilingual support</p>
           </div>
           <div className="header-actions">
             <button 
@@ -107,13 +158,34 @@ const SocialMediaMonitoring = () => {
             >
               ← Back to Analytics
             </button>
-            <button className="refresh-button">🔄 Refresh</button>
+            <button className="refresh-button" onClick={refreshData} disabled={loading}>
+              {loading ? '🔄 Loading...' : '🔄 Refresh Data'}
+            </button>
           </div>
         </div>
       </header>
 
       <main className="monitoring-main">
-        {/* Filters */}
+        {/* INCOIS Alerts Integration */}
+        {incoisAlerts.length > 0 && (
+          <section className="incois-alerts-section">
+            <h2>🚨 INCOIS Early Warnings</h2>
+            <div className="alerts-grid">
+              {incoisAlerts.map(alert => (
+                <div key={alert.id} className={`alert-card alert-${alert.alertLevel.toLowerCase()}`}>
+                  <div className="alert-header">
+                    <span className="alert-type">{alert.type}</span>
+                    <span className="alert-level">{alert.alertLevel}</span>
+                  </div>
+                  <div className="alert-region">{alert.region}</div>
+                  <div className="alert-time">Valid until: {new Date(alert.validUntil).toLocaleString()}</div>
+                </div>
+              ))}
+            </div>
+          </section>
+        )}
+
+        {/* Enhanced Filters */}
         <section className="filters-section">
           <div className="filters-grid">
             <div className="filter-group">
@@ -123,9 +195,11 @@ const SocialMediaMonitoring = () => {
                 onChange={(e) => setFilters({...filters, platform: e.target.value})}
               >
                 <option>All Platforms</option>
-                <option>Twitter</option>
-                <option>Facebook</option>
-                <option>Instagram</option>
+                <option>@TheHindu</option>
+                <option>@IndiaMetDept</option>
+                <option>@INCOIS_Official</option>
+                <option>@CoastalGuardIndia</option>
+                <option>@WeatherChannelIndia</option>
               </select>
             </div>
             <div className="filter-group">
@@ -141,6 +215,35 @@ const SocialMediaMonitoring = () => {
               </select>
             </div>
             <div className="filter-group">
+              <label>Hazard Type</label>
+              <select 
+                value={filters.hazardType}
+                onChange={(e) => setFilters({...filters, hazardType: e.target.value})}
+              >
+                <option>All Hazards</option>
+                <option>Tsunami</option>
+                <option>Cyclone</option>
+                <option>Storm Surge</option>
+                <option>High Waves</option>
+                <option>Coastal Flooding</option>
+              </select>
+            </div>
+            <div className="filter-group">
+              <label>Region</label>
+              <select 
+                value={filters.region}
+                onChange={(e) => setFilters({...filters, region: e.target.value})}
+              >
+                <option>All Regions</option>
+                <option>Bay of Bengal</option>
+                <option>Arabian Sea</option>
+                <option>Tamil Nadu Coast</option>
+                <option>Kerala Coast</option>
+                <option>Gujarat Coast</option>
+                <option>Andhra Pradesh Coast</option>
+              </select>
+            </div>
+            <div className="filter-group">
               <label>Timeframe</label>
               <select 
                 value={filters.timeframe}
@@ -151,110 +254,126 @@ const SocialMediaMonitoring = () => {
                 <option>Last 30 Days</option>
               </select>
             </div>
-            <div className="filter-group">
-              <label>Min Relevance: {filters.relevance}%</label>
-              <input 
-                type="range"
-                min="0"
-                max="100"
-                value={filters.relevance}
-                onChange={(e) => setFilters({...filters, relevance: e.target.value})}
-                className="relevance-slider"
-              />
-            </div>
           </div>
         </section>
 
-        {/* Analytics Grid */}
-        <section className="analytics-grid">
-          {/* Sentiment Analysis */}
-          <div className="analytics-card sentiment-analysis">
-            <h3 className="card-title">Sentiment Analysis</h3>
-            <div className="sentiment-stats">
-              <div className="sentiment-item positive">
-                <span className="sentiment-label">● Positive</span>
-                <span className="sentiment-value">{sentimentStats.positive}</span>
-              </div>
-              <div className="sentiment-item negative">
-                <span className="sentiment-label">● Negative</span>
-                <span className="sentiment-value">{sentimentStats.negative}</span>
-              </div>
-              <div className="sentiment-item neutral">
-                <span className="sentiment-label">● Neutral</span>
-                <span className="sentiment-value">{sentimentStats.neutral}</span>
-              </div>
-              <div className="sentiment-total">
-                <span className="total-label">Total Posts</span>
-                <span className="total-value">{sentimentStats.total}</span>
-              </div>
-            </div>
-          </div>
-
-          {/* Trending Topics */}
-          <div className="analytics-card trending-topics">
-            <h3 className="card-title">🔥 Trending Topics</h3>
-            <div className="topics-list">
-              {trendingTopics.map((topic, index) => (
-                <div key={index} className="topic-item">
-                  <span className="topic-name">{topic.name}</span>
-                  <span className="topic-posts">{topic.posts} posts</span>
-                  <span className={`topic-sentiment ${topic.sentiment}`}>
-                    {topic.sentiment}
-                  </span>
+        {/* Analytics Overview */}
+        <section className="analytics-overview">
+          <div className="analytics-grid">
+            {/* Enhanced Sentiment Analysis */}
+            <div className="analytics-card sentiment-card">
+              <h3>🎭 Sentiment Analysis</h3>
+              <div className="sentiment-stats">
+                <div className="sentiment-item positive">
+                  <span className="sentiment-value">{sentimentStats.positive}</span>
+                  <span className="sentiment-label">Positive</span>
                 </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Geographic Activity */}
-          <div className="analytics-card geographic-activity">
-            <h3 className="card-title">📍 Geographic Activity</h3>
-            <div className="activity-list">
-              {geographicActivity.map((location, index) => (
-                <div key={index} className="activity-item">
-                  <span className="location-name">{location.location}</span>
-                  <span className="activity-indicator">●</span>
-                  <span className="activity-count">{location.activity}</span>
+                <div className="sentiment-item negative">
+                  <span className="sentiment-value">{sentimentStats.negative}</span>
+                  <span className="sentiment-label">Negative</span>
                 </div>
-              ))}
+                <div className="sentiment-item neutral">
+                  <span className="sentiment-value">{sentimentStats.neutral}</span>
+                  <span className="sentiment-label">Neutral</span>
+                </div>
+                <div className="sentiment-item total">
+                  <span className="sentiment-value">{sentimentStats.total}</span>
+                  <span className="sentiment-label">Total Posts</span>
+                </div>
+              </div>
             </div>
-          </div>
-        </section>
 
-        {/* Social Media Posts */}
-        <section className="posts-section">
-          <h2 className="section-title">Social Media Posts ({socialMediaPosts.length})</h2>
-          <div className="posts-list">
-            {socialMediaPosts.map((post) => (
-              <div key={post.id} className="post-card">
-                <div className="post-header">
-                  <div className="post-source">
-                    <span className="platform-name">{post.platform}</span>
-                    {post.verified && <span className="verified-badge">✓</span>}
-                  </div>
-                  <div className="post-meta">
-                    <span className={`sentiment-badge ${post.sentiment.toLowerCase()}`}>
-                      {post.sentiment}
+            {/* Enhanced Trending Topics */}
+            <div className="analytics-card trending-card">
+              <h3>📈 Trending Ocean Hazard Keywords</h3>
+              <div className="trending-list">
+                {trendingTopics.map((topic, index) => (
+                  <div key={index} className="trending-item">
+                    <span className="trending-name">{topic.name}</span>
+                    <span className="trending-posts">{topic.posts} posts</span>
+                    <span className={`trending-sentiment ${topic.sentiment}`}>
+                      {topic.sentiment}
                     </span>
-                    <span className="timestamp">{post.timestamp}</span>
                   </div>
-                </div>
-                <div className="post-content">
-                  {post.content}
-                </div>
-                <div className="post-footer">
-                  <div className="engagement-stats">
+                ))}
+              </div>
+            </div>
+
+            {/* Enhanced Geographic Activity */}
+            <div className="analytics-card geographic-card">
+              <h3>🗺️ Indian Coastal Regions Activity</h3>
+              <div className="geographic-list">
+                {geographicActivity.map((location, index) => (
+                  <div key={index} className="geographic-item">
+                    <span className="location-name">{location.location}</span>
+                    <span className="location-activity">{location.activity} mentions</span>
+                    <div className="activity-bar">
+                      <div 
+                        className="activity-fill" 
+                        style={{width: `${(location.activity / Math.max(...geographicActivity.map(g => g.activity))) * 100}%`}}
+                      ></div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* Enhanced Social Media Posts */}
+        <section className="posts-section">
+          <h2>📱 Live Social Media Feed ({filteredPosts.length} posts)</h2>
+          <div className="posts-container">
+            {loading ? (
+              <div className="loading-state">
+                <div className="loading-spinner"></div>
+                <p>Loading social media data...</p>
+              </div>
+            ) : filteredPosts.length === 0 ? (
+              <div className="empty-state">
+                <p>No posts match the current filters</p>
+              </div>
+            ) : (
+              filteredPosts.map((post, index) => (
+                <div key={index} className="post-card">
+                  <div className="post-header">
+                    <div className="post-author">
+                      <span className="platform-name">{post.platform}</span>
+                      {post.verified && <span className="verified-badge">✓</span>}
+                    </div>
+                    <div className="post-meta">
+                      <span className="post-timestamp">{post.timestamp}</span>
+                      <span className={`sentiment-badge ${post.sentiment.label}`}>
+                        {post.sentiment.label.toUpperCase()} ({Math.round(post.sentiment.confidence * 100)}%)
+                      </span>
+                    </div>
+                  </div>
+                  
+                  <div className="post-content">
+                    {post.content}
+                  </div>
+                  
+                  {post.keywords && post.keywords.length > 0 && (
+                    <div className="post-keywords">
+                      <strong>Keywords:</strong> {post.keywords.join(', ')}
+                    </div>
+                  )}
+                  
+                  {post.context && post.context.length > 0 && (
+                    <div className="post-context">
+                      <strong>Hazard Context:</strong> {post.context.join(', ')}
+                    </div>
+                  )}
+                  
+                  <div className="post-engagement">
                     <span>👍 {post.engagement.likes}</span>
                     <span>🔄 {post.engagement.shares}</span>
                     <span>💬 {post.engagement.comments}</span>
-                  </div>
-                  <div className="relevance-score">
-                    Relevance: {post.relevance} 
-                    <button className="view-button">View →</button>
+                    <span className="relevance">Relevance: {Math.round(post.relevanceScore * 100)}%</span>
                   </div>
                 </div>
-              </div>
-            ))}
+              ))
+            )}
           </div>
         </section>
       </main>
