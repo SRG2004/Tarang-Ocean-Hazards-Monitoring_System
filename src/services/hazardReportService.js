@@ -292,6 +292,15 @@ export const hazardReportService = {
   getHazardTypes() {
     return [
       'tsunami',
+      'storm_surge',
+      'high_waves',
+      'swell_surge',
+      'coastal_current',
+      'abnormal_sea_behavior',
+      'cyclone',
+      'coastal_erosion',
+      'unusual_tide',
+      'marine_flooding',
       'earthquake',
       'flood',
       'storm',
@@ -310,6 +319,82 @@ export const hazardReportService = {
       { value: 'medium', label: 'Medium', color: '#f59e0b' },
       { value: 'high', label: 'High', color: '#ef4444' },
       { value: 'critical', label: 'Critical', color: '#7c2d12' }
+    ];
+  },
+
+  // Get INCOIS-specific ocean hazard types with descriptions
+  getOceanHazardTypes() {
+    return [
+      { 
+        value: 'tsunami', 
+        label: 'Tsunami', 
+        description: 'Seismic sea waves causing coastal inundation',
+        icon: '🌊',
+        priority: 'critical'
+      },
+      { 
+        value: 'storm_surge', 
+        label: 'Storm Surge', 
+        description: 'Abnormal rise in sea level during storms',
+        icon: '🌊',
+        priority: 'high'
+      },
+      { 
+        value: 'high_waves', 
+        label: 'High Waves', 
+        description: 'Dangerous wave heights affecting coastal areas',
+        icon: '🌊',
+        priority: 'high'
+      },
+      { 
+        value: 'swell_surge', 
+        label: 'Swell Surge', 
+        description: 'Long-period ocean swells causing coastal flooding',
+        icon: '🌊',
+        priority: 'medium'
+      },
+      { 
+        value: 'coastal_current', 
+        label: 'Coastal Current', 
+        description: 'Strong currents affecting navigation and safety',
+        icon: '🌊',
+        priority: 'medium'
+      },
+      { 
+        value: 'abnormal_sea_behavior', 
+        label: 'Abnormal Sea Behavior', 
+        description: 'Unusual ocean patterns or phenomena',
+        icon: '🌊',
+        priority: 'medium'
+      },
+      { 
+        value: 'unusual_tide', 
+        label: 'Unusual Tide', 
+        description: 'Abnormal tidal patterns or extreme tides',
+        icon: '🌊',
+        priority: 'medium'
+      },
+      { 
+        value: 'marine_flooding', 
+        label: 'Marine Flooding', 
+        description: 'Coastal flooding due to marine conditions',
+        icon: '🌊',
+        priority: 'high'
+      },
+      { 
+        value: 'coastal_erosion', 
+        label: 'Coastal Erosion', 
+        description: 'Accelerated coastal land loss',
+        icon: '🏖️',
+        priority: 'medium'
+      },
+      { 
+        value: 'cyclone', 
+        label: 'Cyclone', 
+        description: 'Tropical cyclone affecting coastal regions',
+        icon: '🌀',
+        priority: 'critical'
+      }
     ];
   }
 };

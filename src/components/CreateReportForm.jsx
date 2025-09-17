@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { hazardReportService } from '../services/hazardReportService';
+import { incoisIntegrationService } from '../services/incoisIntegrationService';
+import { offlineService } from '../services/offlineService';
 import { useApp } from '../contexts/AppContext';
 import './CreateReportForm.css';
 
@@ -7,6 +9,8 @@ const CreateReportForm = ({ onClose, onSuccess, initialLocation = null }) => {
   const { user } = useApp();
   const [loading, setLoading] = useState(false);
   const [locationLoading, setLocationLoading] = useState(false);
+  const [isOnline, setIsOnline] = useState(navigator.onLine);
+  const [incoisValidation, setIncoisValidation] = useState(null);
   const [formData, setFormData] = useState({
     title: '',
     description: '',
@@ -17,25 +21,53 @@ const CreateReportForm = ({ onClose, onSuccess, initialLocation = null }) => {
     mediaFiles: []
   });
 
-  const hazardTypes = [
-    { value: 'tsunami', label: 'Tsunami' },
-    { value: 'high_waves', label: 'High Waves' },
-    { value: 'storm', label: 'Storm/Cyclone' },
-    { value: 'flood', label: 'Coastal Flood' },
-    { value: 'erosion', label: 'Coastal Erosion' },
-    { value: 'oil_spill', label: 'Oil Spill' },
-    { value: 'debris', label: 'Marine Debris' },
-    { value: 'pollution', label: 'Water Pollution' },
-    { value: 'wildlife', label: 'Marine Wildlife Distress' },
-    { value: 'other', label: 'Other' }
-  ];
+  // Use enhanced hazard types from service
+  const [hazardTypes, setHazardTypes] = useState([]);
+  const [oceanHazardTypes, setOceanHazardTypes] = useState([]);
+  const [severityLevels, setSeverityLevels] = useState([]);
 
-  const severityLevels = [
-    { value: 'low', label: 'Low Risk', color: '#10b981' },
-    { value: 'medium', label: 'Medium Risk', color: '#f59e0b' },
-    { value: 'high', label: 'High Risk', color: '#ef4444' },
-    { value: 'critical', label: 'Critical/Emergency', color: '#7c2d12' }
-  ];
+  useEffect(() => {
+    // Load hazard types and severity levels
+    const types = hazardReportService.getHazardTypes();
+    const oceanTypes = hazardReportService.getOceanHazardTypes();
+    const levels = hazardReportService.getSeverityLevels();
+    
+    setHazardTypes(types.map(type => ({ value: type, label: formatHazardLabel(type) })));
+    setOceanHazardTypes(oceanTypes);
+    setSeverityLevels(levels);
+
+    // Listen for online/offline events
+    const handleOnline = () => setIsOnline(true);
+    const handleOffline = () => setIsOnline(false);
+    
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    };
+  }, []);
+
+  // Format hazard type labels for display
+  const formatHazardLabel = (type) => {
+    return type.split('_').map(word => 
+      word.charAt(0).toUpperCase() + word.slice(1)
+    ).join(' ');
+  };
+
+  // Validate report against INCOIS standards
+  useEffect(() => {
+    if (formData.type && formData.coordinates) {
+      const validation = incoisIntegrationService.validateHazardReport({
+        hazardType: formData.type,
+        latitude: formData.coordinates.lat,
+        longitude: formData.coordinates.lng,
+        severity: formData.severity
+      });
+      setIncoisValidation(validation);
+    }
+  }, [formData.type, formData.coordinates, formData.severity]);
 
   // Get current location
   const getCurrentLocation = () => {
@@ -121,11 +153,31 @@ const CreateReportForm = ({ onClose, onSuccess, initialLocation = null }) => {
         }
       };
 
-      const result = await hazardReportService.submitReport(reportData);
+      let result;
       
-      if (result.success) {
-        alert('Report submitted successfully!');
-        onSuccess && onSuccess(result);
+      if (isOnline) {
+        // Online submission
+        try {
+          result = await hazardReportService.submitReport(reportData);
+          
+          if (result.success) {
+            alert('Report submitted successfully!');
+            onSuccess && onSuccess(result);
+            onClose && onClose();
+          }
+        } catch (error) {
+          // If online submission fails, fallback to offline storage
+          console.warn('Online submission failed, storing offline:', error);
+          await offlineService.storeOfflineReport(reportData);
+          alert('Network error occurred. Report saved offline and will be submitted when connection is restored.');
+          onSuccess && onSuccess({ success: true, offline: true });
+          onClose && onClose();
+        }
+      } else {
+        // Offline submission
+        await offlineService.storeOfflineReport(reportData);
+        alert('You are offline. Report saved locally and will be submitted when connection is restored.');
+        onSuccess && onSuccess({ success: true, offline: true });
         onClose && onClose();
       }
     } catch (error) {
@@ -156,10 +208,27 @@ const CreateReportForm = ({ onClose, onSuccess, initialLocation = null }) => {
       <div className="modal-content">
         <div className="modal-header">
           <h2>Report Ocean Hazard</h2>
-          <button className="close-button" onClick={onClose}>×</button>
+          <div className="header-status">
+            {!isOnline && (
+              <span className="offline-indicator">
+                📱 Offline Mode - Report will sync when connected
+              </span>
+            )}
+            <button className="close-button" onClick={onClose}>×</button>
+          </div>
         </div>
 
         <form onSubmit={handleSubmit} className="report-form">
+          {/* INCOIS Validation Warning */}
+          {incoisValidation && !incoisValidation.incoisCompatible && (
+            <div className="validation-warning">
+              ⚠️ Note: This hazard type may not be directly compatible with INCOIS classification system.
+              {incoisValidation.warnings.map((warning, index) => (
+                <div key={index} className="warning-text">{warning}</div>
+              ))}
+            </div>
+          )}
+
           {/* Basic Information */}
           <div className="form-section">
             <h3>Basic Information</h3>
@@ -186,12 +255,28 @@ const CreateReportForm = ({ onClose, onSuccess, initialLocation = null }) => {
                 onChange={handleInputChange}
                 required
               >
-                {hazardTypes.map(type => (
-                  <option key={type.value} value={type.value}>
-                    {type.label}
-                  </option>
-                ))}
+                <optgroup label="Ocean-Specific Hazards (INCOIS Compatible)">
+                  {oceanHazardTypes.map(type => (
+                    <option key={type.value} value={type.value}>
+                      {type.icon} {type.label}
+                    </option>
+                  ))}
+                </optgroup>
+                <optgroup label="General Hazards">
+                  {hazardTypes.filter(type => 
+                    !oceanHazardTypes.some(oceanType => oceanType.value === type.value)
+                  ).map(type => (
+                    <option key={type.value} value={type.value}>
+                      {type.label}
+                    </option>
+                  ))}
+                </optgroup>
               </select>
+              {formData.type && oceanHazardTypes.find(t => t.value === formData.type) && (
+                <div className="hazard-description">
+                  {oceanHazardTypes.find(t => t.value === formData.type)?.description}
+                </div>
+              )}
             </div>
 
             <div className="form-group">

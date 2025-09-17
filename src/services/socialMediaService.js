@@ -81,41 +81,135 @@ export const socialMediaService = {
 
   // Analyze sentiment of text (client-side utility)
   analyzeSentiment(text) {
-    // Simple sentiment analysis (could be enhanced with a proper library)
-    const positiveWords = ['good', 'safe', 'fine', 'okay', 'normal', 'clear', 'calm'];
-    const negativeWords = ['danger', 'warning', 'alert', 'storm', 'flood', 'tsunami', 'cyclone', 'emergency'];
+    // Enhanced sentiment analysis for ocean hazard context
+    const positiveWords = [
+      'good', 'safe', 'fine', 'okay', 'normal', 'clear', 'calm',
+      'peaceful', 'stable', 'secure', 'protected', 'sheltered',
+      'mild', 'gentle', 'favorable', 'improving', 'controlled',
+      'manageable', 'subsiding', 'weakening', 'receding'
+    ];
+    
+    const negativeWords = [
+      'danger', 'dangerous', 'warning', 'alert', 'storm', 'flood', 'tsunami', 
+      'cyclone', 'emergency', 'evacuate', 'severe', 'critical', 'extreme',
+      'devastating', 'destructive', 'threatening', 'intensifying',
+      'worsening', 'escalating', 'unprecedented', 'catastrophic',
+      'massive', 'powerful', 'violent', 'turbulent', 'rough',
+      'hazardous', 'risky', 'unsafe', 'perilous', 'fatal',
+      'surge', 'inundation', 'landfall', 'depression', 'disturbance'
+    ];
+    
+    const neutralWords = [
+      'monitoring', 'tracking', 'observing', 'reporting', 'update',
+      'advisory', 'forecast', 'prediction', 'analysis', 'assessment',
+      'preparation', 'precaution', 'measure', 'protocol', 'procedure'
+    ];
 
     const textLower = text.toLowerCase();
     let score = 0;
+    let confidence = 0;
 
-    positiveWords.forEach(word => {
-      if (textLower.includes(word)) score += 1;
-    });
+    // Count positive indicators
+    const positiveMatches = positiveWords.filter(word => textLower.includes(word));
+    score += positiveMatches.length * 1;
+    confidence += positiveMatches.length * 0.1;
 
-    negativeWords.forEach(word => {
-      if (textLower.includes(word)) score -= 2;
-    });
+    // Count negative indicators (weighted more heavily)
+    const negativeMatches = negativeWords.filter(word => textLower.includes(word));
+    score -= negativeMatches.length * 2;
+    confidence += negativeMatches.length * 0.2;
+    
+    // Count neutral indicators
+    const neutralMatches = neutralWords.filter(word => textLower.includes(word));
+    confidence += neutralMatches.length * 0.05;
 
+    // Determine sentiment label with confidence
     let label = 'neutral';
-    if (score > 1) label = 'positive';
-    else if (score < -1) label = 'negative';
+    if (score > 1) {
+      label = 'positive';
+    } else if (score <= -1) {
+      label = 'negative';
+    }
+    
+    // Adjust confidence based on text length and keyword density
+    const textWords = text.split(/\s+/).length;
+    const keywordDensity = (positiveMatches.length + negativeMatches.length + neutralMatches.length) / textWords;
+    confidence = Math.min(confidence + keywordDensity, 1.0);
 
     return {
       score,
       label,
-      words: [...positiveWords.filter(w => textLower.includes(w)),
-              ...negativeWords.filter(w => textLower.includes(w))]
+      confidence: Math.round(confidence * 100) / 100,
+      keywords: {
+        positive: positiveMatches,
+        negative: negativeMatches,
+        neutral: neutralMatches
+      },
+      context: this.determineHazardContext(text)
     };
+  },
+
+  // Determine the specific hazard context from text
+  determineHazardContext(text) {
+    const textLower = text.toLowerCase();
+    const contexts = {
+      tsunami: ['tsunami', 'seismic', 'earthquake', 'tectonic'],
+      cyclone: ['cyclone', 'hurricane', 'typhoon', 'depression', 'low pressure'],
+      flood: ['flood', 'inundation', 'overflow', 'submersion'],
+      storm: ['storm', 'thunderstorm', 'squall', 'tempest'],
+      waves: ['wave', 'swell', 'surf', 'breaker'],
+      tide: ['tide', 'tidal', 'high tide', 'low tide'],
+      current: ['current', 'rip current', 'undertow', 'drift'],
+      erosion: ['erosion', 'coastal erosion', 'shoreline', 'retreat'],
+      weather: ['weather', 'meteorological', 'atmospheric', 'climate']
+    };
+
+    const detectedContexts = [];
+    for (const [context, keywords] of Object.entries(contexts)) {
+      if (keywords.some(keyword => textLower.includes(keyword))) {
+        detectedContexts.push(context);
+      }
+    }
+
+    return detectedContexts.length > 0 ? detectedContexts : ['general'];
   },
 
   // Extract keywords related to ocean hazards (client-side utility)
   extractHazardKeywords(text) {
     const hazardKeywords = [
+      // Ocean hazards
       'tsunami', 'cyclone', 'storm', 'flood', 'wave', 'surge', 'tide',
+      'storm surge', 'high waves', 'swell surge', 'coastal current',
+      'abnormal sea behavior', 'unusual tide', 'marine flooding',
+      'coastal erosion', 'rip current', 'undertow',
+      
+      // Coastal and marine terms
       'coastal', 'marine', 'ocean', 'sea', 'beach', 'erosion', 'current',
+      'bay of bengal', 'arabian sea', 'indian ocean', 'coastline',
+      'mangrove', 'coral reef', 'estuary', 'delta', 'lagoon',
+      
+      // Alert and emergency terms
       'warning', 'alert', 'emergency', 'evacuation', 'rescue', 'safety',
-      'fishermen', 'vessel', 'boat', 'harbor', 'port', 'coast guard',
-      'IMD', 'INCOIS', 'meteorological', 'weather', 'wind', 'pressure'
+      'red alert', 'orange alert', 'yellow alert', 'advisory',
+      
+      // Maritime and fishing related
+      'fishermen', 'fishing', 'vessel', 'boat', 'harbor', 'port', 'coast guard',
+      'maritime', 'shipping', 'navigation', 'anchorage', 'dock',
+      
+      // Weather and meteorological
+      'IMD', 'INCOIS', 'meteorological', 'weather', 'wind', 'pressure',
+      'barometric', 'atmospheric', 'monsoon', 'pre-monsoon', 'post-monsoon',
+      'northeast monsoon', 'southwest monsoon',
+      
+      // Indian coastal cities and states
+      'mumbai', 'chennai', 'kolkata', 'visakhapatnam', 'kochi', 'goa',
+      'gujarat', 'maharashtra', 'karnataka', 'kerala', 'tamil nadu',
+      'andhra pradesh', 'odisha', 'west bengal', 'puducherry',
+      'andaman', 'nicobar', 'lakshadweep',
+      
+      // Regional language terms (transliterated)
+      'samudra', 'sagar', 'darya', 'kadal', 'kayal', 'backwater',
+      'meenavar', 'machhua', 'nelayan'
     ];
 
     const extractedKeywords = [];
@@ -150,11 +244,51 @@ export const socialMediaService = {
         verified: true
       },
       {
+        platform: '@INCOIS_Official',
+        author: 'INCOIS',
+        content: 'Storm surge warning issued for Andhra Pradesh and Tamil Nadu coasts. High wave alert (3-4m) expected along Chennai and Visakhapatnam. Coastal residents advised to stay vigilant. #StormSurge #CoastalAlert',
+        timestamp: new Date(Date.now() - 5400000).toISOString(),
+        engagement: { likes: 892, shares: 456, comments: 134 },
+        verified: true
+      },
+      {
         platform: '@ChennaiWeatherLive',
         author: 'Chennai Weather Live',
         content: 'High waves reported at Chennai Marina Beach. Coast Guard advisory issued for fishing vessels. Wave height: 3.5m #ChennaiWeather #MarineAlert',
         timestamp: new Date(Date.now() - 600000).toISOString(),
         engagement: { likes: 245, shares: 67, comments: 23 },
+        verified: true
+      },
+      {
+        platform: '@CoastalGuardIndia',
+        author: 'Indian Coast Guard',
+        content: 'Marine rescue operation underway off Gujarat coast. All fishing vessels advised to return to nearest harbor due to rough sea conditions. Swell surge height: 2.8m #MarineRescue #CoastGuard',
+        timestamp: new Date(Date.now() - 3000000).toISOString(),
+        engagement: { likes: 678, shares: 234, comments: 56 },
+        verified: true
+      },
+      {
+        platform: '@MumbaiPolice',
+        author: 'Mumbai Police',
+        content: 'Coastal flooding reported in low-lying areas of Mumbai. Citizens advised to avoid Worli Sea Face and Marine Drive. High tide expected at 14:30 hrs. #MumbaiFloods #HighTide',
+        timestamp: new Date(Date.now() - 1800000).toISOString(),
+        engagement: { likes: 534, shares: 189, comments: 78 },
+        verified: true
+      },
+      {
+        platform: '@FishermenAssocKerala',
+        author: 'Kerala Fishermen Association',
+        content: 'Abnormal sea behavior observed off Kochi coast. Unusual current patterns reported by fishermen. INCOIS monitoring the situation. All vessels advised caution. #SeaConditions #Kerala',
+        timestamp: new Date(Date.now() - 4200000).toISOString(),
+        engagement: { likes: 234, shares: 87, comments: 45 },
+        verified: false
+      },
+      {
+        platform: '@WeatherChannelIndia',
+        author: 'Weather Channel India',
+        content: 'Monsoon depression in Bay of Bengal intensifying. Coastal Odisha and West Bengal on high alert. Storm surge likely along Paradip and Digha. #MonsoonUpdate #StormSurge',
+        timestamp: new Date(Date.now() - 6600000).toISOString(),
+        engagement: { likes: 423, shares: 167, comments: 92 },
         verified: true
       },
       {
@@ -164,6 +298,38 @@ export const socialMediaService = {
         timestamp: new Date(Date.now() - 10800000).toISOString(),
         engagement: { likes: 76, shares: 0, comments: 21 },
         verified: false
+      },
+      {
+        platform: '@TamilNaduGovt',
+        author: 'Tamil Nadu Government',
+        content: 'Coastal erosion accelerating in Nagapattinam district. Emergency measures being implemented. Residents in vulnerable areas being relocated. #CoastalErosion #TamilNadu',
+        timestamp: new Date(Date.now() - 8400000).toISOString(),
+        engagement: { likes: 345, shares: 123, comments: 67 },
+        verified: true
+      },
+      {
+        platform: '@LocalFisherman_Goa',
+        author: 'Local Fisherman',
+        content: 'Unusual tide patterns at Baga Beach today. Water receded much more than normal low tide. Old fishermen say they never seen like this before. Anyone else notice? #GoaBeach #UnusualTide',
+        timestamp: new Date(Date.now() - 2400000).toISOString(),
+        engagement: { likes: 89, shares: 23, comments: 34 },
+        verified: false
+      },
+      {
+        platform: '@PuducherryPorts',
+        author: 'Puducherry Port Authority',
+        content: 'Strong coastal currents reported in Puducherry waters. All small vessel operations suspended. Rip current advisory issued for beaches. #RipCurrent #PuducherryPorts',
+        timestamp: new Date(Date.now() - 7800000).toISOString(),
+        engagement: { likes: 156, shares: 45, comments: 28 },
+        verified: true
+      },
+      {
+        platform: '@OrissaDisasterMgmt',
+        author: 'Odisha Disaster Management',
+        content: 'Swell surge alert for Puri and Konark beaches. Wave height forecast: 4-5m. Tourists and locals advised to maintain safe distance from shoreline. #SwellSurge #Odisha',
+        timestamp: new Date(Date.now() - 5700000).toISOString(),
+        engagement: { likes: 278, shares: 89, comments: 43 },
+        verified: true
       }
     ];
 
@@ -179,6 +345,131 @@ export const socialMediaService = {
     }
 
     return processedPosts;
+  },
+
+  // Enhanced multilingual support for Indian regional languages
+  translateRegionalText(text, sourceLanguage = 'auto') {
+    // This is a simplified transliteration/translation helper
+    // In production, integrate with Google Translate API or similar service
+    
+    const regionalKeywords = {
+      // Tamil keywords
+      'kadal': 'sea',
+      'alai': 'wave', 
+      'meenavar': 'fishermen',
+      'puyal': 'cyclone',
+      
+      // Hindi keywords
+      'samudra': 'ocean',
+      'sagar': 'sea',
+      'machhua': 'fishermen',
+      'toofan': 'storm',
+      
+      // Bengali keywords
+      'samudra': 'ocean',
+      'machh': 'fish',
+      'jhor': 'storm',
+      
+      // Gujarati keywords
+      'darya': 'sea',
+      'machimaar': 'fishermen',
+      'vaavazoda': 'storm',
+      
+      // Malayalam keywords
+      'kayal': 'backwater',
+      'theera': 'coast',
+      'matsyakar': 'fishermen'
+    };
+
+    let translatedText = text;
+    
+    for (const [regional, english] of Object.entries(regionalKeywords)) {
+      const regex = new RegExp(regional, 'gi');
+      translatedText = translatedText.replace(regex, english);
+    }
+
+    return {
+      originalText: text,
+      translatedText: translatedText,
+      detectedLanguage: sourceLanguage,
+      translatedTerms: Object.keys(regionalKeywords).filter(term => 
+        text.toLowerCase().includes(term)
+      )
+    };
+  },
+
+  // Enhanced geolocation-based filtering for Indian coastal regions
+  getCoastalRegionInfo(latitude, longitude) {
+    const coastalRegions = [
+      {
+        name: 'Mumbai Coast',
+        state: 'Maharashtra',
+        bounds: { latMin: 18.8, latMax: 19.3, lngMin: 72.7, lngMax: 73.0 },
+        hazards: ['storm_surge', 'high_waves', 'marine_flooding', 'monsoon_surge'],
+        languages: ['marathi', 'hindi', 'english']
+      },
+      {
+        name: 'Chennai Coast',
+        state: 'Tamil Nadu', 
+        bounds: { latMin: 12.8, latMax: 13.3, lngMin: 80.1, lngMax: 80.4 },
+        hazards: ['cyclone', 'storm_surge', 'tsunami', 'coastal_erosion'],
+        languages: ['tamil', 'english']
+      },
+      {
+        name: 'Kochi Coast',
+        state: 'Kerala',
+        bounds: { latMin: 9.8, latMax: 10.1, lngMin: 76.1, lngMax: 76.4 },
+        hazards: ['monsoon_surge', 'coastal_erosion', 'swell_surge'],
+        languages: ['malayalam', 'english']
+      },
+      {
+        name: 'Visakhapatnam Coast',
+        state: 'Andhra Pradesh',
+        bounds: { latMin: 17.5, latMax: 17.9, lngMin: 83.1, lngMax: 83.4 },
+        hazards: ['cyclone', 'storm_surge', 'high_waves'],
+        languages: ['telugu', 'english']
+      },
+      {
+        name: 'Kolkata Coast',
+        state: 'West Bengal',
+        bounds: { latMin: 21.8, latMax: 22.7, lngMin: 88.0, lngMax: 88.5 },
+        hazards: ['cyclone', 'storm_surge', 'tidal_surge'],
+        languages: ['bengali', 'english']
+      },
+      {
+        name: 'Gujarat Coast',
+        state: 'Gujarat',
+        bounds: { latMin: 20.0, latMax: 23.5, lngMin: 68.0, lngMax: 72.5 },
+        hazards: ['cyclone', 'storm_surge', 'high_waves', 'coastal_erosion'],
+        languages: ['gujarati', 'hindi', 'english']
+      },
+      {
+        name: 'Goa Coast',
+        state: 'Goa',
+        bounds: { latMin: 15.0, latMax: 15.8, lngMin: 73.7, lngMax: 74.2 },
+        hazards: ['monsoon_surge', 'coastal_erosion', 'rip_current'],
+        languages: ['konkani', 'marathi', 'english']
+      },
+      {
+        name: 'Odisha Coast',
+        state: 'Odisha',
+        bounds: { latMin: 19.3, latMax: 21.9, lngMin: 85.0, lngMax: 87.5 },
+        hazards: ['cyclone', 'storm_surge', 'tsunami', 'coastal_erosion'],
+        languages: ['odia', 'english']
+      }
+    ];
+
+    const matchingRegion = coastalRegions.find(region => 
+      latitude >= region.bounds.latMin && latitude <= region.bounds.latMax &&
+      longitude >= region.bounds.lngMin && longitude <= region.bounds.lngMax
+    );
+
+    return matchingRegion || {
+      name: 'Indian Coast',
+      state: 'Unknown',
+      hazards: ['general_ocean_hazard'],
+      languages: ['english']
+    };
   },
 
   // Get trending topics
