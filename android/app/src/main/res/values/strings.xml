@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Taranga</string>
+    <string name="title_activity_main">Taranga</string>
+    <string name="package_name">com.incois.taranga</string>
+    <string name="custom_url_scheme">com.incois.taranga</string>
+</resources>

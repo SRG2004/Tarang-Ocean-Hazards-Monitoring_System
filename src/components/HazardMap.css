@@ -1,0 +1,8 @@
+.info-window {
+  padding: 1rem;
+  max-width: 300px;
+}
+
+.info-window h3 {
+  margin-top: 0;
+}

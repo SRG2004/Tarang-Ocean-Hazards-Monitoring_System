@@ -1,0 +1,14 @@
+npm error Missing script: "dev"
+npm error
+npm error To see a list of scripts, run:
+npm error   npm run
+npm error A complete log of this run can be found in: /home/user/.npm/_logs/2025-09-27T16_32_28_681Z-debug-0.log
+Secure backend server running on http://localhost:5000
+Connected to the SQLite database.
+Tables created or already exist.
+Demo users have been seeded successfully.
+npm error Missing script: "dev"
+npm error
+npm error To see a list of scripts, run:
+npm error   npm run
+npm error A complete log of this run can be found in: /home/user/.npm/_logs/2025-09-27T16_36_52_812Z-debug-0.log

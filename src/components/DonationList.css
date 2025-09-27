@@ -1,0 +1,27 @@
+.donation-list-container {
+  margin-top: 2rem;
+}
+
+.donation-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.donation-table th,
+.donation-table td {
+  padding: 0.75rem;
+  text-align: left;
+  border-bottom: 1px solid #ddd;
+}
+
+.donation-table th {
+  background-color: #f2f2f2;
+}
+
+.list-loading,
+.list-error {
+  margin-top: 2rem;
+  text-align: center;
+  font-size: 1.2rem;
+  color: #555;
+}

@@ -1,0 +1,172 @@
+<<<<<<< HEAD
+[22:45:56.890] Running build in Washington, D.C., USA (East) – iad1
+[22:45:56.890] Build machine configuration: 2 cores, 8 GB
+[22:45:56.908] Cloning github.com/SRG2004/Taraga-Ocean-Hazards-Monitoring_System (Branch: main, Commit: 2d12b78)
+[22:45:56.935] Skipping build cache, deployment was triggered without cache.
+[22:45:57.343] Cloning completed: 435.000ms
+[22:45:57.372] Found .vercelignore
+[22:45:57.377] Removed 5 ignored files defined in .vercelignore
+[22:45:57.377]   /.env.example
+[22:45:57.378]   /.git/logs/HEAD
+[22:45:57.378]   /.git/logs/refs/heads/master
+[22:45:57.378]   /MOBILE_BUILD_GUIDE.md
+[22:45:57.378]   /README.md
+[22:45:57.871] Running "vercel build"
+[22:45:58.333] Vercel CLI 47.0.5
+[22:45:58.943] Installing dependencies...
+[22:46:00.368] npm warn ERESOLVE overriding peer dependency
+[22:46:00.368] npm warn While resolving: @react-leaflet/core@3.0.0
+[22:46:00.369] npm warn Found: react@18.3.1
+[22:46:00.369] npm warn node_modules/react
+[22:46:00.369] npm warn   dev react@"^18.2.0" from the root project
+[22:46:00.369] npm warn   8 more (@tanstack/react-query, @vis.gl/react-mapbox, ...)
+[22:46:00.369] npm warn
+[22:46:00.369] npm warn Could not resolve dependency:
+[22:46:00.369] npm warn peer react@"^19.0.0" from @react-leaflet/core@3.0.0
+[22:46:00.370] npm warn node_modules/@react-leaflet/core
+[22:46:00.370] npm warn   @react-leaflet/core@"^3.0.0" from react-leaflet@5.0.0
+[22:46:00.370] npm warn   node_modules/react-leaflet
+[22:46:00.370] npm warn
+[22:46:00.370] npm warn Conflicting peer dependency: react@19.1.1
+[22:46:00.370] npm warn node_modules/react
+[22:46:00.370] npm warn   peer react@"^19.0.0" from @react-leaflet/core@3.0.0
+[22:46:00.370] npm warn   node_modules/@react-leaflet/core
+[22:46:00.370] npm warn     @react-leaflet/core@"^3.0.0" from react-leaflet@5.0.0
+[22:46:00.371] npm warn     node_modules/react-leaflet
+[22:46:00.384] npm warn ERESOLVE overriding peer dependency
+[22:46:00.385] npm warn While resolving: @react-leaflet/core@3.0.0
+[22:46:00.385] npm warn Found: react-dom@18.3.1
+[22:46:00.385] npm warn node_modules/react-dom
+[22:46:00.385] npm warn   dev react-dom@"^18.2.0" from the root project
+[22:46:00.385] npm warn   6 more (@vis.gl/react-mapbox, @vis.gl/react-maplibre, ...)
+[22:46:00.385] npm warn
+[22:46:00.385] npm warn Could not resolve dependency:
+[22:46:00.385] npm warn peer react-dom@"^19.0.0" from @react-leaflet/core@3.0.0
+[22:46:00.385] npm warn node_modules/@react-leaflet/core
+[22:46:00.386] npm warn   @react-leaflet/core@"^3.0.0" from react-leaflet@5.0.0
+[22:46:00.386] npm warn   node_modules/react-leaflet
+[22:46:00.386] npm warn
+[22:46:00.386] npm warn Conflicting peer dependency: react-dom@19.1.1
+[22:46:00.386] npm warn node_modules/react-dom
+[22:46:00.386] npm warn   peer react-dom@"^19.0.0" from @react-leaflet/core@3.0.0
+[22:46:00.386] npm warn   node_modules/@react-leaflet/core
+[22:46:00.386] npm warn     @react-leaflet/core@"^3.0.0" from react-leaflet@5.0.0
+[22:46:00.387] npm warn     node_modules/react-leaflet
+[22:46:00.393] npm error code ERESOLVE
+[22:46:00.396] npm error ERESOLVE could not resolve
+[22:46:00.396] npm error
+[22:46:00.396] npm error While resolving: react-leaflet@5.0.0
+[22:46:00.396] npm error Found: react@18.3.1
+[22:46:00.396] npm error node_modules/react
+[22:46:00.397] npm error   dev react@"^18.2.0" from the root project
+[22:46:00.397] npm error   peer react@"^18 || ^19" from @tanstack/react-query@5.87.1
+[22:46:00.397] npm error   node_modules/@tanstack/react-query
+[22:46:00.397] npm error     @tanstack/react-query@"^5.87.1" from the root project
+[22:46:00.397] npm error   7 more (@vis.gl/react-mapbox, @vis.gl/react-maplibre, ...)
+[22:46:00.397] npm error
+[22:46:00.398] npm error Could not resolve dependency:
+[22:46:00.398] npm error peer react@"^19.0.0" from react-leaflet@5.0.0
+[22:46:00.398] npm error node_modules/react-leaflet
+[22:46:00.398] npm error   react-leaflet@"^5.0.0" from the root project
+[22:46:00.398] npm error
+[22:46:00.399] npm error Conflicting peer dependency: react@19.1.1
+[22:46:00.399] npm error node_modules/react
+[22:46:00.399] npm error   peer react@"^19.0.0" from react-leaflet@5.0.0
+[22:46:00.399] npm error   node_modules/react-leaflet
+[22:46:00.399] npm error     react-leaflet@"^5.0.0" from the root project
+[22:46:00.400] npm error
+[22:46:00.400] npm error Fix the upstream dependency conflict, or retry
+[22:46:00.400] npm error this command with --force or --legacy-peer-deps
+[22:46:00.400] npm error to accept an incorrect (and potentially broken) dependency resolution.
+[22:46:00.400] npm error
+[22:46:00.401] npm error
+[22:46:00.401] npm error For a full report see:
+[22:46:00.407] npm error /vercel/.npm/_logs/2025-09-07T17_15_59_176Z-eresolve-report.txt
+[22:46:00.407] npm error A complete log of this run can be found in: /vercel/.npm/_logs/2025-09-07T17_15_59_176Z-debug-0.log
+=======
+[22:45:56.890] Running build in Washington, D.C., USA (East) – iad1
+[22:45:56.890] Build machine configuration: 2 cores, 8 GB
+[22:45:56.908] Cloning github.com/SRG2004/Taraga-Ocean-Hazards-Monitoring_System (Branch: main, Commit: 2d12b78)
+[22:45:56.935] Skipping build cache, deployment was triggered without cache.
+[22:45:57.343] Cloning completed: 435.000ms
+[22:45:57.372] Found .vercelignore
+[22:45:57.377] Removed 5 ignored files defined in .vercelignore
+[22:45:57.377]   /.env.example
+[22:45:57.378]   /.git/logs/HEAD
+[22:45:57.378]   /.git/logs/refs/heads/master
+[22:45:57.378]   /MOBILE_BUILD_GUIDE.md
+[22:45:57.378]   /README.md
+[22:45:57.871] Running "vercel build"
+[22:45:58.333] Vercel CLI 47.0.5
+[22:45:58.943] Installing dependencies...
+[22:46:00.368] npm warn ERESOLVE overriding peer dependency
+[22:46:00.368] npm warn While resolving: @react-leaflet/core@3.0.0
+[22:46:00.369] npm warn Found: react@18.3.1
+[22:46:00.369] npm warn node_modules/react
+[22:46:00.369] npm warn   dev react@"^18.2.0" from the root project
+[22:46:00.369] npm warn   8 more (@tanstack/react-query, @vis.gl/react-mapbox, ...)
+[22:46:00.369] npm warn
+[22:46:00.369] npm warn Could not resolve dependency:
+[22:46:00.369] npm warn peer react@"^19.0.0" from @react-leaflet/core@3.0.0
+[22:46:00.370] npm warn node_modules/@react-leaflet/core
+[22:46:00.370] npm warn   @react-leaflet/core@"^3.0.0" from react-leaflet@5.0.0
+[22:46:00.370] npm warn   node_modules/react-leaflet
+[22:46:00.370] npm warn
+[22:46:00.370] npm warn Conflicting peer dependency: react@19.1.1
+[22:46:00.370] npm warn node_modules/react
+[22:46:00.370] npm warn   peer react@"^19.0.0" from @react-leaflet/core@3.0.0
+[22:46:00.370] npm warn   node_modules/@react-leaflet/core
+[22:46:00.370] npm warn     @react-leaflet/core@"^3.0.0" from react-leaflet@5.0.0
+[22:46:00.371] npm warn     node_modules/react-leaflet
+[22:46:00.384] npm warn ERESOLVE overriding peer dependency
+[22:46:00.385] npm warn While resolving: @react-leaflet/core@3.0.0
+[22:46:00.385] npm warn Found: react-dom@18.3.1
+[22:46:00.385] npm warn node_modules/react-dom
+[22:46:00.385] npm warn   dev react-dom@"^18.2.0" from the root project
+[22:46:00.385] npm warn   6 more (@vis.gl/react-mapbox, @vis.gl/react-maplibre, ...)
+[22:46:00.385] npm warn
+[22:46:00.385] npm warn Could not resolve dependency:
+[22:46:00.385] npm warn peer react-dom@"^19.0.0" from @react-leaflet/core@3.0.0
+[22:46:00.385] npm warn node_modules/@react-leaflet/core
+[22:46:00.386] npm warn   @react-leaflet/core@"^3.0.0" from react-leaflet@5.0.0
+[22:46:00.386] npm warn   node_modules/react-leaflet
+[22:46:00.386] npm warn
+[22:46:00.386] npm warn Conflicting peer dependency: react-dom@19.1.1
+[22:46:00.386] npm warn node_modules/react-dom
+[22:46:00.386] npm warn   peer react-dom@"^19.0.0" from @react-leaflet/core@3.0.0
+[22:46:00.386] npm warn   node_modules/@react-leaflet/core
+[22:46:00.386] npm warn     @react-leaflet/core@"^3.0.0" from react-leaflet@5.0.0
+[22:46:00.387] npm warn     node_modules/react-leaflet
+[22:46:00.393] npm error code ERESOLVE
+[22:46:00.396] npm error ERESOLVE could not resolve
+[22:46:00.396] npm error
+[22:46:00.396] npm error While resolving: react-leaflet@5.0.0
+[22:46:00.396] npm error Found: react@18.3.1
+[22:46:00.396] npm error node_modules/react
+[22:46:00.397] npm error   dev react@"^18.2.0" from the root project
+[22:46:00.397] npm error   peer react@"^18 || ^19" from @tanstack/react-query@5.87.1
+[22:46:00.397] npm error   node_modules/@tanstack/react-query
+[22:46:00.397] npm error     @tanstack/react-query@"^5.87.1" from the root project
+[22:46:00.397] npm error   7 more (@vis.gl/react-mapbox, @vis.gl/react-maplibre, ...)
+[22:46:00.397] npm error
+[22:46:00.398] npm error Could not resolve dependency:
+[22:46:00.398] npm error peer react@"^19.0.0" from react-leaflet@5.0.0
+[22:46:00.398] npm error node_modules/react-leaflet
+[22:46:00.398] npm error   react-leaflet@"^5.0.0" from the root project
+[22:46:00.398] npm error
+[22:46:00.399] npm error Conflicting peer dependency: react@19.1.1
+[22:46:00.399] npm error node_modules/react
+[22:46:00.399] npm error   peer react@"^19.0.0" from react-leaflet@5.0.0
+[22:46:00.399] npm error   node_modules/react-leaflet
+[22:46:00.399] npm error     react-leaflet@"^5.0.0" from the root project
+[22:46:00.400] npm error
+[22:46:00.400] npm error Fix the upstream dependency conflict, or retry
+[22:46:00.400] npm error this command with --force or --legacy-peer-deps
+[22:46:00.400] npm error to accept an incorrect (and potentially broken) dependency resolution.
+[22:46:00.400] npm error
+[22:46:00.401] npm error
+[22:46:00.401] npm error For a full report see:
+[22:46:00.407] npm error /vercel/.npm/_logs/2025-09-07T17_15_59_176Z-eresolve-report.txt
+[22:46:00.407] npm error A complete log of this run can be found in: /vercel/.npm/_logs/2025-09-07T17_15_59_176Z-debug-0.log
+>>>>>>> 94addd6 (Initial commit with synthetic report generator and architecture documentation)
+[22:46:00.429] Error: Command "npm install" exited with 1

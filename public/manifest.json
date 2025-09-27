@@ -1,0 +1,23 @@
+{
+  "name": "Tarang Ocean Hazard Monitor",
+  "short_name": "Tarang",
+  "description": "Real-time ocean hazard monitoring and reporting system for coastal safety",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#667eea",
+  "theme_color": "#667eea",
+  "orientation": "portrait-primary",
+  "categories": [
+    "utilities",
+    "safety",
+    "weather"
+  ],
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

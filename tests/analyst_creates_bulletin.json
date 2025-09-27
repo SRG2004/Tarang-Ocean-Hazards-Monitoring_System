@@ -1,0 +1,56 @@
+{
+  "context": {
+    "appName": "Flash Bulletin and Social Media Monitoring",
+    "testName": "Analyst Creates Bulletin from Social Media",
+    "testId": "TOH-789"
+  },
+  "sequentialSteps": [
+    {
+      "stepId": 1,
+      "stepName": "Analyst logs in and navigates to the social media monitoring dashboard.",
+      "action": "signInAndNavigate",
+      "parameters": {
+        "userRole": "analyst",
+        "navigationTarget": "/social-media-monitoring"
+      }
+    },
+    {
+      "stepId": 2,
+      "stepName": "Analyst identifies a relevant social media post about a potential tsunami.",
+      "action": "identifyAndSelectPost",
+      "parameters": {
+        "keywords": ["tsunami", "warning", "Indian Ocean"],
+        "elementSelector": "post-card"
+      }
+    },
+    {
+      "stepId": 3,
+      "stepName": "Analyst verifies the post's content and decides to create a flash bulletin.",
+      "action": "verifyPostAndInitiateBulletin",
+      "parameters": {
+        "verificationText": "Tsunami warning issued for the entire Indian Ocean region",
+        "actionButton": "create-bulletin-button"
+      }
+    },
+    {
+      "stepId": 4,
+      "stepName": "Analyst drafts and publishes the flash bulletin.",
+      "action": "draftAndPublishBulletin",
+      "parameters": {
+        "bulletinTitle": "Tsunami Warning - Indian Ocean",
+        "bulletinMessage": "A tsunami warning is in effect for all coastal areas of the Indian Ocean. Evacuate to higher ground immediately. This is not a drill.",
+        "severityLevel": "critical",
+        "affectedAreas": ["Indian Ocean Region"]
+      }
+    },
+    {
+      "stepId": 5,
+      "stepName": "System verifies that the flash bulletin is visible to all users.",
+      "action": "verifyBulletinIsLive",
+      "parameters": {
+        "bulletinSelector": ".flash-bulletin",
+        "expectedTitle": "Tsunami Warning - Indian Ocean"
+      }
+    }
+  ]
+}
