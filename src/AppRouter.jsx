@@ -1,13 +1,12 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
-import { useContext } from "react";
-import { AuthContext } from "./contexts/AuthContext";
+import { useAuth } from "./contexts/AuthContext";
 import RoleSelectionPage from "./pages/RoleSelectionPage";
 import LoginPage from "./pages/LoginPage";
 // ...existing imports...
 // import dashboards etc.
 
 export default function AppRouter() {
-  const { user } = useContext(AuthContext);
+  const { user } = useAuth();
 
   return (
     <Router>
