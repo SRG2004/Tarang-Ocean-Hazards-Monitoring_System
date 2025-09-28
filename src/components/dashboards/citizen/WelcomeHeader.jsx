@@ -1,6 +1,6 @@
 import React from 'react';
 import { Waves } from 'lucide-react';
-import { Card } from './ui/card';
+import { Card } from '../../ui/card';
 
 const WelcomeHeader = () => (
     <Card className="overflow-hidden">
