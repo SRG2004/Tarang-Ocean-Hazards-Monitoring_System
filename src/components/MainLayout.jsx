@@ -14,5 +14,3 @@ export default function MainLayout({ user }) {
     </div>
   );
 }
-
-export default MainLayout;

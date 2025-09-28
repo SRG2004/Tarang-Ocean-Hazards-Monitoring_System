@@ -18,7 +18,7 @@ import {
   AlertCircle
 } from 'lucide-react';
 
-export const OfficialDashboard = ({ user }) => {
+export function OfficialDashboard({ user }) {
   const [reports, setReports] = useState([]);
   const [statistics, setStatistics] = useState({});
   const [activeIncidents, setActiveIncidents] = useState([]);
@@ -276,76 +276,4 @@ export const OfficialDashboard = ({ user }) => {
     </div>
   );
 };
-        {/* Communication Center */}
-        <div className="card">
-          <h3 className="text-xl font-semibold text-gray-900 mb-6">Communications</h3>
-          <div className="space-y-3">
-            <div className="flex items-center justify-between p-3 bg-green-50 rounded-lg">
-              <div>
-                <div className="font-semibold text-green-800">Coast Guard HQ</div>
-                <div className="text-sm text-green-600">Online • Ready</div>
-              </div>
-              <button className="btn-primary bg-green-600 hover:bg-green-700">
-                <Phone className="w-4 h-4" />
-              </button>
-            </div>
-            <div className="flex items-center justify-between p-3 bg-blue-50 rounded-lg">
-              <div>
-                <div className="font-semibold text-blue-800">Field Team Alpha</div>
-                <div className="text-sm text-blue-600">In transit • ETA 15m</div>
-              </div>
-              <button className="btn-primary bg-blue-600 hover:bg-blue-700">
-                <Radio className="w-4 h-4" />
-              </button>
-            </div>
-            <div className="flex items-center justify-between p-3 bg-purple-50 rounded-lg">
-              <div>
-                <div className="font-semibold text-purple-800">State Control</div>
-                <div className="text-sm text-purple-600">Standby • Monitoring</div>
-              </div>
-              <button className="btn-primary bg-purple-600 hover:bg-purple-700">
-                <Phone className="w-4 h-4" />
-              </button>
-            </div>
-          </div>
-        </div>
 
-        {/* Situational Awareness */}
-        <div className="card">
-          <h3 className="text-xl font-semibold text-gray-900 mb-6">Situational Awareness</h3>
-          <div className="space-y-4">
-            <div className="bg-blue-50 p-3 rounded-lg">
-              <div className="font-semibold text-blue-800">Weather Update</div>
-              <div className="text-sm text-blue-600 mt-1">
-                Moderate winds expected. Sea conditions: Rough. Visibility: Good
-              </div>
-            </div>
-            <div className="bg-green-50 p-3 rounded-lg">
-              <div className="font-semibold text-green-800">Traffic Status</div>
-              <div className="text-sm text-green-600 mt-1">
-                All evacuation routes clear. Emergency lanes available
-              </div>
-            </div>
-            <div className="bg-yellow-50 p-3 rounded-lg">
-              <div className="font-semibold text-yellow-800">Public Readiness</div>
-              <div className="text-sm text-yellow-600 mt-1">
-                85% evacuation compliance. 3 shelter requests pending
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Operations Map */}
-      <div className="card">
-        <div className="flex items-center justify-between mb-6">
-          <h3 className="text-xl font-semibold text-gray-900">Operations Map</h3>
-          <button className="btn-secondary">Full Screen View</button>
-        </div>
-        <div className="h-96">
-          <MinimalHazardMap height="384px" showControls={true} />
-        </div>
-      </div>
-    </div>
-  );
-};
