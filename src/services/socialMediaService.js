@@ -1,159 +1,85 @@
-import axios from 'axios';
-
-import { syntheticReportGenerator } from '../utils/syntheticReportGenerator.js';
-import { syntheticReportDbService } from './syntheticReportDatabaseService.js';
-
-const API_BASE_URL = import.meta.env.VITE_API_URL || '/api';
-
-export const socialMediaService = {
-  // Get auth headers
-  getAuthHeaders() {
-    const token = localStorage.getItem('authToken');
-    return token ? { Authorization: `Bearer ${token}` } : {};
-  },
-
-  // Get social media posts directly from Firebase, bypassing the non-existent backend API
-  async getSocialMediaPosts(filters = {}) {
-    try {
-      console.log("Fetching social media posts directly from Firebase...");
-      // Using the syntheticReportDbService to fetch posts from Firestore
-      const posts = await syntheticReportDbService.getSyntheticReports(filters);
-      return posts;
-    } catch (error) {
-      console.error('Error fetching posts from Firebase, falling back to local simulated data:', error);
-      // If Firebase fails, fallback to the original in-memory data
-      return await this.fetchSimulatedSocialMediaData();
-    }
-  },
-
-  // NOTE: The original API-dependent function is preserved below for future reference
-  // when the backend API is implemented.
-  async getSocialMediaPosts_API_Original(filters = {}) {
-    try {
-      const params = new URLSearchParams();
-      Object.keys(filters).forEach(key => {
-        if (filters[key] !== undefined && filters[key] !== null) {
-          params.append(key, filters[key]);
-        }
-      });
-      const response = await axios.get(`${API_BASE_URL}/social-media/posts?${params}`, {
-        headers: this.getAuthHeaders()
-      });
-      return response.data.posts || [];
-    } catch (error) {
-      console.warn('API not available, using simulated data:', error.message);
-      return await this.fetchSimulatedSocialMediaData();
-    }
-  },
-
-  async monitorTwitter() {
-    const twitterBearerToken = import.meta.env.VITE_TWITTER_BEARER_TOKEN;
-
-    if (!twitterBearerToken) {
-      console.warn('Twitter bearer token not found. Skipping Twitter monitoring.');
-      return [];
-    }
-
-    const query = `(
-      tsunami OR cyclone OR "ocean hazard" OR "marine emergency" OR "coastal warning" OR "storm surge" OR flood OR monsoon OR "high tide"
-    ) AND (
-      India OR "Indian Ocean" OR "Bay of Bengal" OR "Arabian Sea" OR Mumbai OR Chennai OR Kolkata OR Kerala OR "Tamil Nadu" OR Odisha OR Gujarat
-    ) -is:retweet`;
-
-    try {
-      const response = await axios.get('https://api.twitter.com/2/tweets/search/recent', {
-        headers: {
-          Authorization: `Bearer ${twitterBearerToken}`,
-        },
-        params: {
-          query,
-          'tweet.fields': 'created_at,geo',
-          expansions: 'author_id',
-          'user.fields': 'name,username,profile_image_url,verified',
-          max_results: 20,
-        },
-      });
-
-      if (response.data && response.data.data) {
-        const users = response.data.includes.users.reduce((acc, user) => {
-          acc[user.id] = user;
-          return acc;
-        }, {});
-
-        return response.data.data.map(tweet => {
-          const user = users[tweet.author_id] || {};
-          return {
-            platform: 'Twitter',
-            author: user.name,
-            username: user.username,
-            content: tweet.text,
-            timestamp: tweet.created_at,
-            profileImageUrl: user.profile_image_url,
-            verified: user.verified,
-            engagement: {},
-            geo: tweet.geo,
-          };
-        });
-      }
-
-      return [];
-    } catch (error) {
-      console.error('Error fetching tweets:', error);
-      throw new Error('Failed to fetch tweets from Twitter API.');
-    }
-  },
-
-  // ... (rest of the file remains the same) ...
-
-  // Simulate social media data fetching
-  async fetchSimulatedSocialMediaData() {
-    const simulatedPosts = [
-       {
-        platform: '@NDRFHQ',
-        author: 'NDRF',
-        content: 'Massive flooding in Punjab. Over 1,400 villages inundated. Rescue operations are in full swing. Stay safe, follow evacuation orders. #PunjabFloods #Monsoon2025',
-        timestamp: new Date(Date.now() - 1.5 * 60 * 60 * 1000).toISOString(),
-        engagement: { likes: 1200, shares: 800, comments: 250 },
-        verified: true
-      },
-      // ... more simulated posts
-    ];
-    return simulatedPosts;
-  },
-
-  syntheticReports: {
-    // ... (rest of the syntheticReports object is unchanged) ...
-    async generateReports(count = 5, options = {}) {
-      try {
-        const posts = syntheticReportGenerator.generateMultiplePosts(count, options);
-        // This function saves the generated posts to Firebase
-        await syntheticReportDbService.saveMultipleSyntheticReports(posts);
-        console.log(`✅ Generated and saved ${posts.length} synthetic reports to database`);
-        return posts;
-
-      } catch (error) {
-        console.error('❌ Error generating synthetic reports:', error);
-        throw error;
-      }
+export const mockPosts = [
+    {
+        id: '1',
+        platform: 'twitter',
+        author: '@MumbaiWeather',
+        content: 'High tide alert! Coastal areas experiencing unusual wave patterns. Marine Drive witnessing higher than normal waves. Authorities advising caution for beachgoers. #MumbaiTide #CoastalAlert #SafetyFirst',
+        timestamp: new Date(Date.now() - 2 * 60 * 60 * 1000),
+        engagement: { likes: 234, shares: 89, comments: 45 },
+        sentiment: 'negative',
+        relevanceScore: 95,
+        location: 'Mumbai, Maharashtra',
+        verified: true,
+        hashtags: ['MumbaiTide', 'CoastalAlert', 'SafetyFirst'],
+        mentions: []
     },
-    // ...
-  }
-};
+    {
+        id: '2',
+        platform: 'facebook',
+        author: 'Gujarat Coast Guard',
+        content: 'Coast Guard vessels on high alert following reports of unusual sea conditions off Dwarka coast. All fishing vessels advised to return to nearest harbor immediately. Weather department monitoring situation closely.',
+        timestamp: new Date(Date.now() - 4 * 60 * 60 * 1000),
+        engagement: { likes: 156, shares: 234, comments: 67 },
+        sentiment: 'neutral',
+        relevanceScore: 92,
+        location: 'Dwarka, Gujarat',
+        verified: true,
+        hashtags: [],
+        mentions: ['GujaratCoastGuard']
+    },
+    {
+        id: '3',
+        platform: 'instagram',
+        author: '@chennai_beaches',
+        content: 'Beautiful morning at Marina Beach! Crystal clear waters and gentle waves. Perfect weather for a beach walk. Thanks to @chennai_corporation for keeping our beaches clean! 🌊☀️ #ChennaiBeaches #MarinaBech #BeachLife',
+        timestamp: new Date(Date.now() - 6 * 60 * 60 * 1000),
+        engagement: { likes: 567, shares: 23, comments: 89 },
+        sentiment: 'positive',
+        relevanceScore: 45,
+        location: 'Chennai, Tamil Nadu',
+        verified: false,
+        hashtags: ['ChennaiBeaches', 'MarinaBech', 'BeachLife'],
+        mentions: ['chennai_corporation']
+    },
+    {
+        id: '4',
+        platform: 'twitter',
+        author: '@KeralaAlerts',
+        content: '⚠️ CYCLONE WATCH: Meteorological department issues cyclone alert for Kerala coast. Expected to intensify over next 48 hours. Fishermen advised against venturing into sea. Emergency helplines activated. Stay safe! #CycloneAlert #KeralaWeather',
+        timestamp: new Date(Date.now() - 8 * 60 * 60 * 1000),
+        engagement: { likes: 445, shares: 678, comments: 123 },
+        sentiment: 'negative',
+        relevanceScore: 98,
+        location: 'Kerala',
+        verified: true,
+        hashtags: ['CycloneAlert', 'KeralaWeather'],
+        mentions: []
+    },
+    {
+        id: '5',
+        platform: 'youtube',
+        author: 'Indian Ocean Research',
+        content: 'New study reveals changing ocean current patterns in the Arabian Sea. Our latest research shows significant shifts that could affect monsoon patterns and coastal ecosystems. Watch our detailed analysis.',
+        timestamp: new Date(Date.now() - 12 * 60 * 60 * 1000),
+        engagement: { likes: 1234, shares: 156, comments: 89 },
+        sentiment: 'neutral',
+        relevanceScore: 87,
+        location: 'Pan-India',
+        verified: true,
+        hashtags: ['OceanResearch', 'ArabianSea', 'ClimateChange'],
+        mentions: []
+    }
+];
 
-/**
- * Utility function to generate and save synthetic data to Firebase.
- * You can run this function from the browser's developer console.
- * Example: > await generateAndSaveSyntheticData(20)
- */
-window.generateAndSaveSyntheticData = async (count = 15) => {
-  try {
-    console.log(`Generating and saving ${count} synthetic reports to Firebase...`);
-    const reports = await socialMediaService.syntheticReports.generateReports(count);
-    console.log(`Successfully generated and saved ${reports.length} reports to Firebase.`);
-    // You might want to reload the page or trigger a state update in your app to see the new data
-    window.location.reload(); 
-    return reports;
-  } catch (error) {
-    console.error("Failed to generate and save synthetic data:", error);
-  }
+export const generateNewPosts = (existingPosts) => {
+    return existingPosts.map((post, index) => ({
+        ...post,
+        id: `refresh_${Date.now()}_${index}`,
+        timestamp: new Date(Date.now() - Math.random() * 3600000), // Random timestamp within last hour
+        engagement: {
+            likes: Math.floor(Math.random() * 1000) + post.engagement.likes,
+            shares: Math.floor(Math.random() * 500) + post.engagement.shares,
+            comments: Math.floor(Math.random() * 200) + post.engagement.comments
+        }
+    }));
 };

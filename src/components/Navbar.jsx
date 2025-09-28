@@ -1,179 +1,133 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import { useApp } from '../contexts/AppContext';
-import { 
-  Waves, Home, FileText, Bell, User, Settings, LogOut, 
-  Users, Shield, BarChart3, AlertTriangle, Megaphone, 
-  Users2, TrendingUp, Hash 
-} from 'lucide-react';
+import { Home, FileText, Bell, User, Settings, LogOut, Users, Shield, BarChart3, AlertTriangle, Megaphone, Users2, TrendingUp, Hash } from 'lucide-react';
+import { Button } from './ui/button';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from './ui/dropdown-menu';
 
 const Navbar = () => {
   const { user, logout } = useApp();
   const navigate = useNavigate();
-  const [profileOpen, setProfileOpen] = useState(false);
 
   const handleLogout = async () => {
     await logout();
     navigate('/');
-    setProfileOpen(false);
   };
 
   if (!user) {
     return (
-      <nav className="bg-white shadow-sm border-b border-gray-200">
+      <header className="bg-white shadow-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
+          <div className="flex justify-between items-center py-4">
             <NavLink to="/" className="flex items-center space-x-2 text-xl font-bold text-primary">
-              <Waves className="h-6 w-6" />
-              <span>Tarang</span>
+              <div className="w-8 h-8 bg-blue-500 rounded-md flex items-center justify-center">
+                <Home className="text-white" size={20} />
+              </div>
+              <span className="text-xl font-semibold text-gray-800">Tarang</span>
             </NavLink>
-            <div className="flex space-x-4">
-              <NavLink 
-                to="/login" 
-                className="btn-primary text-sm px-4 py-2"
-              >
-                Login
-              </NavLink>
-              <NavLink 
-                to="/register" 
-                className="btn-secondary text-sm px-4 py-2"
-              >
-                Register
-              </NavLink>
+            <div className="flex items-center space-x-4">
+              <Button asChild variant="outline">
+                <NavLink to="/login">Login</NavLink>
+              </Button>
+              <Button asChild>
+                <NavLink to="/register">Register</NavLink>
+              </Button>
             </div>
           </div>
         </div>
-      </nav>
+      </header>
     );
   }
 
-  // Role-specific nav items
   const getNavItems = () => {
-    switch (user.role) {
-      case 'citizen':
-        return [
-          { icon: Home, label: 'Home', path: `/${user.role}/dashboard` },
-          { icon: FileText, label: 'Report', path: `/${user.role}/reports` },
-          { icon: Bell, label: 'Alerts', path: `/${user.role}/alerts` },
-          { icon: User, label: 'Profile', path: `/${user.role}/profile` },
-        ];
-      case 'official':
-        return [
-          { icon: AlertTriangle, label: 'Issue Alert', path: `/${user.role}/issue-alert` },
-          { icon: Users, label: 'Verify', path: `/${user.role}/verify` },
-          { icon: FileText, label: 'Generate Report', path: `/${user.role}/generate-report` },
-          { icon: Bell, label: 'Notification', path: `/${user.role}/notifications` },
-          { icon: Users2, label: 'Social', path: `/${user.role}/social` },
-          { icon: User, label: 'Profile', path: `/${user.role}/profile` },
-        ];
-      case 'analyst':
-        return [
-          { icon: TrendingUp, label: 'Social Intelligence', path: `/${user.role}/social-intelligence` },
-          { icon: FileText, label: 'Reports', path: `/${user.role}/reports` },
-          { icon: Bell, label: 'Alerts', path: `/${user.role}/alerts` },
-          { icon: Hash, label: 'Analytics', path: `/${user.role}/analytics` },
-          { icon: User, label: 'Profile', path: `/${user.role}/profile` },
-        ];
-      default:
-        return [];
-    }
+    // Role-specific nav items
   };
 
   const navItems = getNavItems();
 
-  const getRoleIcon = () => {
+  const getRoleIconAndStyle = () => {
     switch (user.role) {
       case 'citizen':
-        return <Users className="h-4 w-4 text-primary" />;
+        return { icon: <Users size={20} />, style: 'text-blue-600 bg-blue-100' };
       case 'official':
-        return <Shield className="h-4 w-4 text-success" />;
+        return { icon: <Shield size={20} />, style: 'text-green-600 bg-green-100' };
       case 'analyst':
-        return <BarChart3 className="h-4 w-4 text-violet-500" />;
+        return { icon: <BarChart3 size={20} />, style: 'text-purple-600 bg-purple-100' };
       default:
-        return null;
+        return { icon: <User size={20} />, style: 'text-gray-600 bg-gray-100' };
     }
   };
 
+  const { icon: roleIcon, style: roleStyle } = getRoleIconAndStyle();
+
   return (
-    <nav className="nav-surface bg-white shadow-sm border-b border-gray-200">
+    <header className="bg-white shadow-sm sticky top-0 z-40">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between items-center h-16">
-          {/* Logo */}
-          <NavLink to={`/${user.role}/dashboard`} className="flex items-center space-x-2 text-xl font-bold text-primary transition-all">
-            <Waves className="h-6 w-6" />
-            <span>Tarang</span>
-          </NavLink>
-
-          {/* Navigation Items */}
-          <div className="hidden md:flex items-center space-x-1">
-            {navItems.map((item) => (
-              <NavLink
-                key={item.label}
-                to={item.path}
-                className={({ isActive }) =>
-                  `nav-item flex items-center space-x-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${
-                    isActive
-                      ? 'nav-active bg-primary text-white shadow-md'
-                      : 'text-secondary hover:text-primary'
-                  }`
-                }
-              >
-                <item.icon className="h-4 w-4" />
-                <span>{item.label}</span>
-              </NavLink>
-            ))}
-          </div>
-
-          {/* Profile Dropdown */}
-          <div className="relative flex items-center space-x-4">
-            <div className="flex items-center space-x-2 cursor-pointer" onClick={() => setProfileOpen(!profileOpen)}>
-              <div className="w-8 h-8 bg-primary rounded-full flex items-center justify-center">
-                {getRoleIcon()}
-              </div>
-              <span className="text-sm font-medium text-primary capitalize">{user.role}</span>
+        <div className="flex justify-between items-center py-3">
+          <div className="flex items-center space-x-2">
+            <div className="w-8 h-8 bg-blue-500 rounded-md flex items-center justify-center">
+              <Home className="text-white" size={20} />
             </div>
-
-            {profileOpen && (
-              <div className="absolute right-0 mt-2 w-48 bg-card rounded-md shadow-lg py-1 z-50 border border-border">
-                <NavLink 
-                  to={`/${user.role}/profile`} 
-                  className="flex items-center space-x-2 px-4 py-2 text-sm text-secondary hover:bg-hover w-full"
-                  onClick={() => setProfileOpen(false)}
-                >
-                  <User className="h-4 w-4" />
-                  <span>Profile</span>
-                </NavLink>
-                <NavLink 
-                  to={`/${user.role}/settings`} 
-                  className="flex items-center space-x-2 px-4 py-2 text-sm text-secondary hover:bg-hover w-full"
-                  onClick={() => setProfileOpen(false)}
-                >
-                  <Settings className="h-4 w-4" />
-                  <span>Settings</span>
-                </NavLink>
-                <button
-                  onClick={handleLogout}
-                  className="flex items-center space-x-2 px-4 py-2 text-sm text-danger hover:bg-hover w-full text-left"
-                >
-                  <LogOut className="h-4 w-4" />
-                  <span>Logout</span>
-                </button>
-              </div>
-            )}
+            <span className="text-xl font-semibold text-gray-800">Tarang</span>
           </div>
-
-          {/* Mobile menu button - placeholder for now */}
-          <div className="md:hidden">
-            <button className="text-secondary hover:text-primary">
-              <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-              </svg>
-            </button>
+          
+          <div className="flex items-center space-x-6">
+            <div className="relative">
+              <Bell size={24} className="text-gray-600" />
+              <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-4 w-4 flex items-center justify-center">2</span>
+            </div>
+            
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" className="flex items-center space-x-2">
+                  <div className={`w-9 h-9 rounded-full flex items-center justify-center ${roleStyle}`}>
+                    {roleIcon}
+                  </div>
+                  <div>
+                    <p className="font-semibold text-sm text-gray-800 capitalize">{user.name || user.role}</p>
+                    <p className="text-xs text-gray-500">Community Member</p>
+                  </div>
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-56">
+                <DropdownMenuLabel>My Account</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem asChild>
+                  <NavLink to={`/${user.role}/profile`}>
+                    <User className="mr-2 h-4 w-4" />
+                    <span>Profile</span>
+                  </NavLink>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <NavLink to={`/${user.role}/settings`}>
+                    <Settings className="mr-2 h-4 w-4" />
+                    <span>Settings</span>
+                  </NavLink>
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={handleLogout}>
+                  <LogOut className="mr-2 h-4 w-4" />
+                  <span>Logout</span>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         </div>
+        
+        <nav className="flex space-x-8 border-t pt-2">
+            <NavLink 
+              to={`/${user.role}/dashboard`}
+              className={({ isActive }) =>
+                `flex items-center space-x-2 py-3 text-sm font-medium ${isActive ? 'text-blue-600 border-b-2 border-blue-600' : 'text-gray-500 hover:text-gray-700'}`
+              }>
+              <Home size={20} />
+              <span>Home</span>
+            </NavLink>
+            {/* Add other nav items based on role */}
+          </nav>
       </div>
-    </nav>
+    </header>
   );
 };
 
-export default Navbar;
+export default Navbar; 

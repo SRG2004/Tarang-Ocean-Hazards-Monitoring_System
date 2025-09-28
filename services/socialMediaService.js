@@ -28,7 +28,7 @@ let monitoringStats = {
   }
 };
 
-export const startSocialMediaMonitoring = async () => {
+export const initializeSocialMediaService = async () => {
   console.log('Starting social media monitoring service...');
 
   // Start monitoring intervals
@@ -41,7 +41,7 @@ export const startSocialMediaMonitoring = async () => {
     } catch (error) {
       console.error('Error in social media monitoring:', error.message);
     }
-  }, 30000); // Check every 30 seconds
+  }, 900000); // Check every 15 minutes
 
   console.log('Social media monitoring service started successfully');
 };
@@ -179,6 +179,9 @@ const monitorNews = async () => {
           }
         }
       }
+    } else {
+        const errorBody = await response.text();
+        console.error('News API request failed:', errorBody);
     }
   } catch (error) {
     console.error('News API monitoring error:', error.message);

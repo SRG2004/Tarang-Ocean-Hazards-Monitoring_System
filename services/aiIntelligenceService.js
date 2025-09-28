@@ -140,7 +140,6 @@ async function callGemini(prompt, options = {}) {
 class AIIntelligenceService {
   constructor() {
     validateApiKeys();
-    console.log('AI Intelligence Service initialized successfully');
   }
   
   async analyzeHazardReport(reportData) {
@@ -182,8 +181,22 @@ class AIIntelligenceService {
   }
 }
 
-// Export the service
-export default new AIIntelligenceService();
+let aiServiceInstance;
+
+export const initializeAIIntelligenceService = () => {
+  if (!aiServiceInstance) {
+    aiServiceInstance = new AIIntelligenceService();
+    console.log('✅ AI Intelligence Service initialized');
+  }
+  return aiServiceInstance;
+};
+
+export const getAIService = () => {
+  if (!aiServiceInstance) {
+    throw new Error('AI Intelligence Service must be initialized first.');
+  }
+  return aiServiceInstance;
+};
 
 // For Firebase integration notes:
 // Ensure Firebase indexes are created via console for queries like:

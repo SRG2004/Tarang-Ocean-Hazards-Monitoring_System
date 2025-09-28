@@ -1,16 +1,14 @@
 import React, { useState } from 'react';
 import axios from 'axios';
 import toast from 'react-hot-toast';
-import {
-  Heart,
-  CreditCard,
-  User,
-  Mail,
-  DollarSign,
-  Shield,
-  CheckCircle,
-  Send
-} from 'lucide-react';
+import { Heart, CreditCard, User, Mail, DollarSign, Shield, ArrowRight } from 'lucide-react';
+import { Button } from './ui/button';
+import { Input } from './ui/input';
+import { Label } from './ui/label';
+import { Checkbox } from './ui/checkbox';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from './ui/card';
+import { cn } from '../lib/utils';
+import { Alert, AlertDescription } from './ui/alert';
 
 const DonationForm = ({ onDonationSuccess }) => {
   const [formData, setFormData] = useState({
@@ -21,241 +19,133 @@ const DonationForm = ({ onDonationSuccess }) => {
   });
   const [submitting, setSubmitting] = useState(false);
 
-  // Reset form fields when anonymous is toggled
-  const handleAnonymousChange = (e) => {
-    const { checked } = e.target;
-    if (checked) {
-      setFormData(prev => ({
-        ...prev,
-        anonymous: true,
-        donorName: '',
-        donorEmail: ''
-      }));
-    } else {
-      setFormData(prev => ({ ...prev, anonymous: false }));
-    }
+  const handleAnonymousChange = (checked) => {
+    setFormData(prev => ({ ...prev, anonymous: checked, donorName: '', donorEmail: '' }));
   };
 
   const handleInputChange = (e) => {
-    const { name, value, type, checked } = e.target;
-    if (name === 'anonymous') {
-      handleAnonymousChange(e);
-    } else {
-      setFormData((prev) => ({ ...prev, [name]: type === 'checkbox' ? checked : value }));
-    }
+    const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setSubmitting(true);
-
     try {
       const response = await axios.post('/api/donations/process', formData);
-      toast.success('Donation processed successfully!');
-      if (onDonationSuccess) {
-        onDonationSuccess(response.data.donation);
-      }
-      // Reset form
-      setFormData({
-        amount: '',
-        donorName: '',
-        donorEmail: '',
-        anonymous: false,
-      });
+      toast.success('Thank you for your generous donation!');
+      if (onDonationSuccess) onDonationSuccess(response.data.donation);
+      setFormData({ amount: '', donorName: '', donorEmail: '', anonymous: false });
     } catch (error) {
       console.error('Failed to process donation:', error);
-      toast.error(error.response?.data?.error || 'Failed to process donation. Please try again.');
+      toast.error(error.response?.data?.error || 'Donation failed. Please try again.');
     } finally {
       setSubmitting(false);
     }
   };
 
-  const suggestedAmounts = [500, 1000, 2500, 5000, 10000];
+  const suggestedAmounts = [500, 1000, 2500, 5000];
 
   return (
-    <div className="card-feature max-w-2xl mx-auto animate-fade-in">
-      {/* Header */}
-      <div className="bg-gradient-to-r from-green-500 to-emerald-500 text-white p-6 -m-8 mb-8 rounded-xl">
-        <div className="flex items-center space-x-3">
-          <Heart className="w-8 h-8" />
-          <div>
-            <h2 className="text-2xl font-bold">Support Relief Efforts</h2>
-            <p className="text-green-100">Help coastal communities stay safe with your donation</p>
-          </div>
+    <Card className="max-w-2xl mx-auto shadow-lg">
+      <CardHeader className="bg-primary text-primary-foreground text-center p-6">
+        <div className="mx-auto bg-primary-foreground/10 rounded-full p-3 w-fit">
+          <Heart className="w-8 h-8 text-white" />
         </div>
-      </div>
+        <CardTitle className="text-2xl mt-2">Support Relief Efforts</CardTitle>
+        <CardDescription className="text-primary-foreground/80">
+          Your contribution helps us protect coastal communities.
+        </CardDescription>
+      </CardHeader>
+      <form onSubmit={handleSubmit}>
+        <CardContent className="p-6 space-y-8">
+          <div className="space-y-4 text-center">
+            <Label className="text-base font-semibold">Choose Donation Amount (INR)</Label>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mt-2">
+              {suggestedAmounts.map((amount) => (
+                <Button
+                  key={amount}
+                  type="button"
+                  variant={formData.amount === amount.toString() ? 'default' : 'outline'}
+                  className="h-auto py-3"
+                  onClick={() => setFormData(prev => ({ ...prev, amount: amount.toString() }))}
+                >
+                  <span className="text-lg font-bold">₹{amount.toLocaleString()}</span>
+                </Button>
+              ))}
+            </div>
+            <div className="relative">
+                <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
+                <Input
+                    type="number"
+                    name="amount"
+                    value={formData.amount}
+                    onChange={handleInputChange}
+                    placeholder="Or enter a custom amount"
+                    className="pl-10 text-center text-lg"
+                    min="10"
+                    required
+                />
+            </div>
+          </div>
 
-      <form onSubmit={handleSubmit} className="space-y-6">
-        {/* Donation Amount */}
-        <div>
-          <label className="block text-sm font-semibold text-gray-700 mb-3">
-            Donation Amount (INR) *
-          </label>
-          
-          {/* Suggested Amounts */}
-          <div className="grid grid-cols-3 md:grid-cols-5 gap-3 mb-4">
-            {suggestedAmounts.map((amount) => (
-              <button
-                key={amount}
-                type="button"
-                onClick={() => setFormData(prev => ({ ...prev, amount: amount.toString() }))}
-                className={`p-3 rounded-lg border-2 transition-all text-center hover:shadow-md ${
-                  formData.amount === amount.toString()
-                    ? 'border-green-500 bg-green-50 text-green-700'
-                    : 'border-gray-200 hover:border-green-300'
-                }`}
-              >
-                <DollarSign className="w-4 h-4 mx-auto mb-1" />
-                <div className="text-sm font-semibold">₹{amount.toLocaleString()}</div>
-              </button>
-            ))}
-          </div>
-          
-          {/* Custom Amount */}
-          <div className="relative">
-            <DollarSign className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
-            <input
-              type="number"
-              id="amount"
-              name="amount"
-              value={formData.amount}
-              onChange={handleInputChange}
-              placeholder="Enter custom amount"
-              className="input pl-12"
-              min="1"
-              required
-            />
-          </div>
-        </div>
-
-        {/* Donor Information */}
-        <div className="card">
-          <div className="flex items-center space-x-3 mb-4">
-            <User className="w-6 h-6 text-blue-600" />
-            <h4 className="text-lg font-semibold">Donor Information</h4>
-          </div>
-          
           <div className="space-y-4">
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2" htmlFor="donorName">
-                Your Name {!formData.anonymous && '*'}
-              </label>
-              <div className="relative">
-                <User className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
-                <input
-                  type="text"
+              <div className="space-y-2">
+                <Label htmlFor="donorName">Full Name {!formData.anonymous && '*'}</Label>
+                <Input
                   id="donorName"
                   name="donorName"
                   value={formData.donorName}
                   onChange={handleInputChange}
-                  placeholder="Enter your full name"
-                  className="input pl-12"
+                  placeholder="e.g. Jane Doe"
                   required={!formData.anonymous}
                   disabled={formData.anonymous}
+                  className="aria-disabled:opacity-50"
                 />
               </div>
-            </div>
-
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2" htmlFor="donorEmail">
-                Your Email {!formData.anonymous && '*'}
-              </label>
-              <div className="relative">
-                <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
-                <input
-                  type="email"
+              <div className="space-y-2">
+                <Label htmlFor="donorEmail">Email Address {!formData.anonymous && '*'}</Label>
+                <Input
                   id="donorEmail"
                   name="donorEmail"
+                  type="email"
                   value={formData.donorEmail}
                   onChange={handleInputChange}
-                  placeholder="your.email@example.com"
-                  className="input pl-12"
+                  placeholder="jane.doe@example.com"
                   required={!formData.anonymous}
                   disabled={formData.anonymous}
+                  className="aria-disabled:opacity-50"
                 />
               </div>
-            </div>
-            
-            <div className="flex items-center space-x-3 p-4 bg-gray-50 rounded-lg">
-              <label className="flex items-center cursor-pointer">
-                <input
-                  type="checkbox"
-                  name="anonymous"
-                  checked={formData.anonymous}
-                  onChange={handleInputChange}
-                  className="w-4 h-4 text-green-600 rounded focus:ring-green-500"
-                />
-                <span className="ml-2 text-sm font-medium text-gray-900">
-                  Donate anonymously
-                </span>
-              </label>
-              <Shield className="w-4 h-4 text-gray-500" />
-            </div>
-          </div>
-        </div>
-
-        {/* Payment Information */}
-        <div className="card">
-          <div className="flex items-center space-x-3 mb-4">
-            <CreditCard className="w-6 h-6 text-purple-600" />
-            <h4 className="text-lg font-semibold">Payment</h4>
-          </div>
-          
-          <div className="bg-blue-50 p-4 rounded-lg">
-            <div className="flex items-start space-x-3">
-              <Shield className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
-              <div className="text-sm text-blue-800">
-                <p className="font-semibold mb-1">Secure Payment Processing</p>
-                <ul className="space-y-1 text-blue-700">
-                  <li>• 256-bit SSL encryption</li>
-                  <li>• No card details stored</li>
-                  <li>• Instant receipt via email</li>
-                  <li>• Tax deduction certificate available</li>
-                </ul>
+              <div className="flex items-center space-x-2 pt-2">
+                <Checkbox id="anonymous" checked={formData.anonymous} onCheckedChange={handleAnonymousChange} />
+                <Label htmlFor="anonymous" className="text-sm font-normal cursor-pointer">
+                  I'd like to donate anonymously
+                </Label>
               </div>
-            </div>
           </div>
-        </div>
 
-        {/* Donation Impact */}
-        <div className="bg-gradient-to-r from-green-50 to-emerald-50 p-6 rounded-xl border border-green-200">
-          <h4 className="text-lg font-semibold text-green-800 mb-3">Your Impact</h4>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm text-green-700">
-            <div className="text-center">
-              <div className="text-2xl font-bold text-green-600">₹500</div>
-              <div>Emergency kit for 1 family</div>
-            </div>
-            <div className="text-center">
-              <div className="text-2xl font-bold text-green-600">₹2,500</div>
-              <div>Warning system maintenance</div>
-            </div>
-            <div className="text-center">
-              <div className="text-2xl font-bold text-green-600">₹10,000</div>
-              <div>Rescue boat equipment</div>
-            </div>
-          </div>
-        </div>
+          <Alert>
+            <Shield className="h-4 w-4" />
+            <AlertDescription>
+              All payments are processed securely. Your financial details are never stored on our servers.
+            </AlertDescription>
+          </Alert>
 
-        {/* Submit Button */}
-        <div className="flex items-center justify-between pt-6 border-t border-gray-200">
-          <div className="text-sm text-gray-500">
-            * Required unless anonymous
-          </div>
-          
-          <button
-            type="submit"
-            disabled={submitting}
-            className={`btn-success flex items-center space-x-2 px-8 py-3 ${
-              submitting ? 'opacity-50 cursor-not-allowed' : ''
-            }`}
-          >
-            {submitting && <div className="loading" />}
-            <Heart className="w-5 h-5" />
-            <span>{submitting ? 'Processing Donation...' : 'Donate Now'}</span>
-          </button>
-        </div>
+        </CardContent>
+        <CardFooter className="p-6 bg-secondary/30 border-t">
+          <Button type="submit" disabled={submitting} className="w-full text-lg py-6">
+            {submitting ? (
+                <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-3" />
+            ) : (
+                <Heart className="w-5 h-5 mr-3" />
+            )}
+            {submitting ? 'Processing Donation...' : `Donate ₹${formData.amount || '0'}`}
+            {!submitting && <ArrowRight className="w-5 h-5 ml-3" />}
+          </Button>
+        </CardFooter>
       </form>
-    </div>
+    </Card>
   );
 };
 

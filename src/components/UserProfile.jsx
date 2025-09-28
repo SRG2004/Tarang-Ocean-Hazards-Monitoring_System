@@ -1,141 +1,99 @@
-    import React, { useState, useEffect } from 'react';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from './ui/card';
-import { Button } from './ui/button';
-import { Input } from './ui/input';
-import { Label } from './ui/label';
-import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar'; // Assuming you have an Avatar component
+import React, { useState, useEffect } from 'react';
+import { Card, CardContent, CardHeader } from './ui/card';
 import { AlertCircle, CheckCircle } from 'lucide-react';
+import { useApp } from '../contexts/AppContext';
+import { Alert, AlertDescription } from './ui/alert';
+import UserProfileHeader from './UserProfileHeader';
+import UserProfileDetails from './UserProfileDetails';
+import UserProfileForm from './UserProfileForm';
 
 export const UserProfile = () => {
-    const [profile, setProfile] = useState(null);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState(null);
-    const [success, setSuccess] = useState(null);
+    const { user, setUser } = useApp();
+    const [isEditing, setIsEditing] = useState(false);
+    const [formData, setFormData] = useState({});
+    const [feedback, setFeedback] = useState({ message: '', type: '' });
     const [submitting, setSubmitting] = useState(false);
 
     useEffect(() => {
-        const fetchProfile = async () => {
-            try {
-                const response = await fetch('/api/auth/profile');
-                if (!response.ok) {
-                    throw new Error('Failed to fetch profile');
-                }
-                const data = await response.json();
-                setProfile(data.user);
-            } catch (err) {
-                if (err instanceof Error) {
-                    setError(err.message);
-                } else {
-                    setError('An unknown error occurred');
-                }
-            } finally {
-                setLoading(false);
-            }
-        };
-
-        fetchProfile();
-    }, []);
+        if (user) {
+            setFormData({
+                fullName: user.displayName || '',
+                phone: user.phone || '',
+            });
+        }
+    }, [user]);
 
     const handleInputChange = (e) => {
         const { name, value } = e.target;
-        if (profile) {
-            setProfile({ ...profile, [name]: value });
+        setFormData(prev => ({ ...prev, [name]: value }));
+    };
+
+    const handleEditToggle = () => {
+        if (isEditing) {
+            setFormData({ fullName: user.displayName, phone: user.phone });
         }
+        setIsEditing(!isEditing);
+        setFeedback({ message: '', type: '' });
     };
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        if (!profile) return;
-
         setSubmitting(true);
-        setError(null);
-        setSuccess(null);
+        setFeedback({ message: '', type: '' });
 
         try {
-            const response = await fetch('/api/auth/profile', {
-                method: 'PUT',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    fullName: profile.fullName,
-                    phone: profile.phone,
-                }),
-            });
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            setUser(prevUser => ({ ...prevUser, ...formData, displayName: formData.fullName }));
 
-            if (!response.ok) {
-                const errorData = await response.json();
-                throw new Error(errorData.error || 'Failed to update profile');
-            }
-
-            const result = await response.json();
-            setProfile(result.user);
-            setSuccess('Profile updated successfully!');
-
+            setFeedback({ message: 'Profile updated successfully!', type: 'success' });
+            setIsEditing(false);
         } catch (err) {
-            if (err instanceof Error) {
-                setError(err.message);
-            } else {
-                setError('An unknown error occurred');
-            }
+            setFeedback({ message: 'Failed to update profile. Please try again.', type: 'error' });
+            console.error('Update profile error:', err);
         } finally {
             setSubmitting(false);
         }
     };
 
-    if (loading) {
-        return <p>Loading profile...</p>;
+    if (!user) {
+        return (
+            <Card className="max-w-2xl mx-auto">
+                <CardHeader><CardTitle>Loading...</CardTitle></CardHeader>
+                <CardContent><p>Loading user profile. Please wait.</p></CardContent>
+            </Card>
+        );
     }
 
-    if (error && !profile) {
-        return <p className="text-red-500">Error: {error}</p>;
-    }
-    
-    if (!profile) {
-        return <p>Could not load profile.</p>;
-    }
+    const getInitials = (name) => name.split(' ').map(n => n[0]).join('').toUpperCase();
 
     return (
         <Card className="max-w-2xl mx-auto">
             <CardHeader>
-                <CardTitle>User Profile</CardTitle>
-                <CardDescription>View and update your personal information.</CardDescription>
+                <UserProfileHeader 
+                    isEditing={isEditing} 
+                    handleEditToggle={handleEditToggle} 
+                    user={user} 
+                    getInitials={getInitials} 
+                />
             </CardHeader>
-            <CardContent as="form" onSubmit={handleSubmit} className="grid gap-6">
-                {error && (
-                    <div className="mb-4 p-3 bg-red-100 text-red-700 rounded-md flex items-center">
-                        <AlertCircle className="h-5 w-5 mr-2" />
-                        <span>{error}</span>
-                    </div>
+            <CardContent className="space-y-6">
+                {feedback.message && (
+                    <Alert variant={feedback.type === 'error' ? 'destructive' : 'success'}>
+                        {feedback.type === 'error' ? <AlertCircle className="h-4 w-4" /> : <CheckCircle className="h-4 w-4" />}
+                        <AlertDescription>{feedback.message}</AlertDescription>
+                    </Alert>
                 )}
-                {success && (
-                    <div className="mb-4 p-3 bg-green-100 text-green-700 rounded-md flex items-center">
-                        <CheckCircle className="h-5 w-5 mr-2" />
-                        <span>{success}</span>
-                    </div>
+
+                {isEditing ? (
+                    <UserProfileForm 
+                        formData={formData} 
+                        handleInputChange={handleInputChange} 
+                        submitting={submitting} 
+                        handleSubmit={handleSubmit} 
+                    />
+                ) : (
+                    <UserProfileDetails user={user} />
                 )}
-                <div className="flex items-center gap-6">
-                    <Avatar className="h-20 w-20">
-                        <AvatarImage src={`https://api.dicebear.com/6.x/initials/svg?seed=${profile.fullName}`} alt={profile.fullName} />
-                        <AvatarFallback>{profile.fullName.substring(0, 2)}</AvatarFallback>
-                    </Avatar>
-                     <Button variant="outline" type="button" disabled>Change Picture</Button>
-                </div>
-                <div className="grid gap-2">
-                    <Label htmlFor="fullName">Name</Label>
-                    <Input id="fullName" name="fullName" value={profile.fullName} onChange={handleInputChange} />
-                </div>
-                <div className="grid gap-2">
-                    <Label htmlFor="email">Email</Label>
-                    <Input id="email" type="email" value={profile.email} disabled />
-                </div>
-                <div className="grid gap-2">
-                    <Label htmlFor="phone">Phone</Label>
-                    <Input id="phone" name="phone" type="tel" value={profile.phone} onChange={handleInputChange} />
-                </div>
-                <Button type="submit" disabled={submitting} className="w-full">
-                    {submitting ? 'Updating...' : 'Update Profile'}
-                </Button>
             </CardContent>
         </Card>
     );

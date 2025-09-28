@@ -3,7 +3,7 @@
  * Handles Socket.IO connections and real-time data streaming
  */
 
-export const initializeRealTimeServices = (io) => {
+export const initializeRealTimeService = (io) => {
   console.log('Initializing real-time services...');
 
   // Set up real-time event handlers

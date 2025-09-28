@@ -2,6 +2,13 @@ import React, { useState } from 'react';
 import { useApp } from '../contexts/AppContext';
 import { hazardReportService } from '../services/hazardReportService';
 import { AlertCircle, MapPin, X } from 'lucide-react';
+import { Button } from './ui/button';
+import { Input } from './ui/input';
+import { Label } from './ui/label';
+import { Textarea } from './ui/textarea';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from './ui/card';
+import { Alert, AlertDescription } from './ui/alert';
 
 const hazardTypes = [
   'Storm Surge',
@@ -27,6 +34,11 @@ const CreateReportForm = ({ onReportSubmitted, onClose }) => {
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
+    if (error) setError('');
+  };
+  
+  const handleHazardTypeChange = (value) => {
+    setFormData(prev => ({ ...prev, hazardType: value }));
     if (error) setError('');
   };
 
@@ -60,109 +72,102 @@ const CreateReportForm = ({ onReportSubmitted, onClose }) => {
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-card rounded-lg max-w-md w-full">
-        <div className="p-6 border-b border-border flex items-center justify-between">
-          <h2 className="text-xl font-semibold text-text-primary">Report Hazard</h2>
-          <button onClick={onClose} className="text-text-secondary hover:text-text-primary">
-            <X className="h-6 w-6" />
-          </button>
-        </div>
-
-        <form onSubmit={handleSubmit} className="p-6 space-y-4">
-          {error && (
-            <div className="bg-danger/10 border border-danger text-danger px-3 py-2 rounded-md text-sm">
-              {error}
-            </div>
-          )}
-
-          {/* Hazard Type */}
-          <div>
-            <label className="block text-sm font-medium text-text-primary mb-2 flex items-center space-x-2">
-              <AlertCircle className="h-4 w-4 text-danger" />
-              <span>Hazard Type *</span>
-            </label>
-            <select
-              name="hazardType"
-              value={formData.hazardType}
-              onChange={handleInputChange}
-              required
-              className="input w-full"
-            >
-              <option value="">Select hazard type</option>
-              {hazardTypes.map(type => (
-                <option key={type} value={type}>{type}</option>
-              ))}
-            </select>
-          </div>
-
-          {/* Location */}
-          <div>
-            <label className="block text-sm font-medium text-text-primary mb-2 flex items-center space-x-2">
-              <MapPin className="h-4 w-4 text-primary" />
-              <span>Location *</span>
-            </label>
-            <div className="grid grid-cols-2 gap-3">
-              <input
-                type="number"
-                name="latitude"
-                placeholder="Latitude"
-                value={formData.latitude}
-                onChange={handleInputChange}
-                step="any"
-                required
-                className="input"
-              />
-              <input
-                type="number"
-                name="longitude"
-                placeholder="Longitude"
-                value={formData.longitude}
-                onChange={handleInputChange}
-                step="any"
-                required
-                className="input"
-              />
-            </div>
-          </div>
-
-          {/* Description */}
-          <div>
-            <label className="block text-sm font-medium text-text-primary mb-2">
-              Description *
-            </label>
-            <textarea
-              name="description"
-              placeholder="Describe the hazard in detail (what, when, severity, etc.)"
-              value={formData.description}
-              onChange={handleInputChange}
-              rows="4"
-              required
-              className="input resize-none"
-            />
-          </div>
-
-          <div className="flex space-x-3 pt-2">
-            <button
+    <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
+      <Card className="max-w-lg w-full relative animate-in zoom-in-95">
+        <form onSubmit={handleSubmit}>
+          <CardHeader>
+            <CardTitle>Report a New Hazard</CardTitle>
+            <CardDescription>
+              Your report helps keep the community safe. Please provide as much detail as possible.
+            </CardDescription>
+          </CardHeader>
+          <Button
               type="button"
+              variant="ghost"
+              size="icon"
               onClick={onClose}
-              className="btn-secondary flex-1"
-              disabled={submitting}
+              className="absolute top-4 right-4"
             >
+              <X className="h-4 w-4" />
+            </Button>
+
+          <CardContent className="space-y-6">
+            {error && (
+              <Alert variant="destructive">
+                <AlertCircle className="h-4 w-4" />
+                <AlertDescription>{error}</AlertDescription>
+              </Alert>
+            )}
+
+            <div className="space-y-2">
+              <Label htmlFor="hazardType">Hazard Type *</Label>
+              <Select 
+                name="hazardType" 
+                value={formData.hazardType} 
+                onValueChange={handleHazardTypeChange}
+                required
+              >
+                <SelectTrigger id="hazardType">
+                  <SelectValue placeholder="Select a hazard type" />
+                </SelectTrigger>
+                <SelectContent>
+                  {hazardTypes.map(type => (
+                    <SelectItem key={type} value={type}>{type}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <Label>Location (Coordinates) *</Label>
+              <div className="grid grid-cols-2 gap-4">
+                <Input
+                  name="latitude"
+                  placeholder="Latitude"
+                  value={formData.latitude}
+                  onChange={handleInputChange}
+                  type="number"
+                  step="any"
+                  required
+                />
+                <Input
+                  name="longitude"
+                  placeholder="Longitude"
+                  value={formData.longitude}
+                  onChange={handleInputChange}
+                  type="number"
+                  step="any"
+                  required
+                />
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="description">Description *</Label>
+              <Textarea
+                id="description"
+                name="description"
+                placeholder="Describe the hazard in detail (e.g., what you saw, when, severity)."
+                value={formData.description}
+                onChange={handleInputChange}
+                rows={4}
+                required
+              />
+            </div>
+
+          </CardContent>
+          <CardFooter className="flex justify-end space-x-2">
+            <Button type="button" variant="outline" onClick={onClose} disabled={submitting}>
               Cancel
-            </button>
-            <button
-              type="submit"
-              className="btn-primary flex-1 flex items-center justify-center space-x-2"
-              disabled={submitting}
-            >
-              <span>{submitting ? 'Submitting...' : 'Submit Report'}</span>
-            </button>
-          </div>
+            </Button>
+            <Button type="submit" disabled={submitting}>
+              {submitting ? 'Submitting...' : 'Submit Report'}
+            </Button>
+          </CardFooter>
         </form>
-      </div>
+      </Card>
     </div>
   );
 };
 
-export { CreateReportForm };
+export default CreateReportForm; 
