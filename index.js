@@ -1,112 +1,115 @@
-const express = require('express');
-const cors = require('cors');
-const bcrypt = require('bcrypt');
-const jwt = require('jsonwebtoken');
-const db = require('./database');
+import express from 'express';
+import cors from 'cors';
+import bodyParser from 'body-parser';
+import dotenv from 'dotenv';
+import { createServer } from 'http';
+import { Server } from 'socket.io';
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+// Import routes
+import authRoutes from './routes/auth.js';
+import hazardRoutes from './routes/hazards.js';
+import donationRoutes from './routes/donations.js';
+import volunteerRoutes from './routes/volunteers.js';
+import analyticsRoutes from './routes/analytics.js';
+import notificationRoutes from './routes/notifications.js';
+import socialMediaRoutes from './routes/socialMedia.js';
+import aiRoutes from './routes/ai.js';
+
+// Import services
+import { initializeRealTimeService } from './services/realTimeService.js';
+import { initializeSocialMediaService } from './services/socialMediaService.js';
+import { initializeAIIntelligenceService } from './services/aiIntelligenceService.js';
+
+dotenv.config();
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const app = express();
-const PORT = 5000;
-const JWT_SECRET = 'your_super_secret_jwt_key'; // Use a long, random string in production
+const server = createServer(app);
+const io = new Server(server, {
+  cors: {
+    origin: process.env.FRONTEND_URL || "http://localhost:5173",
+    methods: ["GET", "POST"]
+  }
+});
+
+const port = process.env.PORT || 3001;
 
 // --- Middleware ---
-app.use(cors());
-app.use(express.json()); 
+app.use(cors({
+  origin: process.env.FRONTEND_URL || "http://localhost:5173",
+  credentials: true
+}));
+app.use(bodyParser.json({ limit: '10mb' }));
+app.use(bodyParser.urlencoded({ extended: true, limit: '10mb' }));
 
-// --- Error Handling ---
-const sendError = (res, message, statusCode = 400) => {
-  return res.status(statusCode).json({ error: message });
-};
+// Serve static files from the dist directory
+app.use(express.static(path.join(__dirname, 'dist')));
 
-// --- Authentication Routes ---
+// API Routes
+app.use('/api/auth', authRoutes);
+app.use('/api/hazards', hazardRoutes);
+app.use('/api/donations', donationRoutes);
+app.use('/api/volunteers', volunteerRoutes);
+app.use('/api/analytics', analyticsRoutes);
+app.use('/api/notifications', notificationRoutes);
+app.use('/api/social-media', socialMediaRoutes);
+app.use('/api/ai', aiRoutes);
 
-// POST /api/auth/register
-app.post('/api/auth/register', (req, res) => {
-  const { email, fullName, password, role } = req.body;
-
-  if (!email || !fullName || !password || !role) {
-    return sendError(res, 'All fields are required for registration.');
-  }
-  if (!['citizen', 'official', 'analyst', 'admin'].includes(role)) {
-    return sendError(res, 'Invalid user role specified.');
-  }
-
-  bcrypt.hash(password, 10, (err, hashedPassword) => {
-    if (err) {
-      return sendError(res, 'Server error during password hashing.', 500);
-    }
-
-    const sql = 'INSERT INTO Users (email, fullName, password, role) VALUES (?, ?, ?, ?)';
-    db.run(sql, [email, fullName, hashedPassword, role], function(err) {
-      if (err) {
-        return sendError(res, 'Email already in use.');
-      }
-      res.status(201).json({ message: 'User registered successfully', userId: this.lastID });
-    });
+// Health check endpoint
+app.get('/api/health', (req, res) => {
+  res.json({
+    status: 'OK',
+    timestamp: new Date().toISOString(),
+    environment: process.env.NODE_ENV || 'development'
   });
 });
 
-// POST /api/auth/login
-app.post('/api/auth/login', (req, res) => {
-  const { email, password } = req.body;
+// Socket.IO connection handling
+io.on('connection', (socket) => {
+  console.log('User connected:', socket.id);
 
-  if (!email || !password) {
-    return sendError(res, 'Email and password are required.');
-  }
+  socket.on('join-room', (room) => {
+    socket.join(room);
+    console.log(`User ${socket.id} joined room: ${room}`);
+  });
 
-  const sql = 'SELECT * FROM Users WHERE email = ?';
-  db.get(sql, [email], (err, user) => {
-    if (err) {
-      return sendError(res, 'Server error during login.', 500);
-    }
-    if (!user) {
-      return sendError(res, 'Invalid credentials.', 401);
-    }
+  socket.on('leave-room', (room) => {
+    socket.leave(room);
+    console.log(`User ${socket.id} left room: ${room}`);
+  });
 
-    bcrypt.compare(password, user.password, (err, isMatch) => {
-      if (err || !isMatch) {
-        return sendError(res, 'Invalid credentials.', 401);
-      }
-      
-      const { password, ...userProfile } = user;
-
-      const token = jwt.sign({ id: user.id, role: user.role }, JWT_SECRET, { expiresIn: '3h' });
-      res.json({ token, user: userProfile });
-    });
+  socket.on('disconnect', () => {
+    console.log('User disconnected:', socket.id);
   });
 });
 
-// --- Middleware to Protect Routes ---
-const authenticateToken = (req, res, next) => {
-  const authHeader = req.headers['authorization'];
-  const token = authHeader && authHeader.split(' ')[1];
+// Initialize services
+initializeRealTimeService(io);
+initializeSocialMediaService(io);
+initializeAIIntelligenceService(io);
 
-  if (token == null) {
-    return res.sendStatus(401); // Unauthorized
-  }
+// Serve React app for all non-API routes
+app.get('*', (req, res) => {
+  res.sendFile(path.join(__dirname, 'dist', 'index.html'));
+});
 
-  jwt.verify(token, JWT_SECRET, (err, user) => {
-    if (err) {
-      return res.sendStatus(403); // Forbidden
-    }
-    req.user = user;
-    next();
-  });
-};
-
-// --- Protected Routes ---
-
-// GET /api/user/profile
-app.get('/api/user/profile', authenticateToken, (req, res) => {
-  const sql = "SELECT id, email, fullName, role FROM Users WHERE id = ?";
-  db.get(sql, [req.user.id], (err, user) => {
-    if (err || !user) {
-      return sendError(res, 'User not found.', 404);
-    }
-    res.json(user);
+// Error handling middleware
+app.use((err, req, res, next) => {
+  console.error('Error:', err);
+  res.status(500).json({
+    error: 'Internal server error',
+    message: process.env.NODE_ENV === 'development' ? err.message : 'Something went wrong'
   });
 });
 
-// --- Server Initialization ---
-app.listen(PORT, () => {
-  console.log(`Secure backend server running on http://localhost:${PORT}`);
+server.listen(port, () => {
+  console.log(`🌊 Tarang Ocean Hazards Monitoring System`);
+  console.log(`✅ Server running on port: ${port}`);
+  console.log(`🔗 Frontend URL: ${process.env.FRONTEND_URL || 'http://localhost:5173'}`);
+  console.log(`🚀 Environment: ${process.env.NODE_ENV || 'development'}`);
+  console.log(`📡 Real-time services initialized`);
 });
