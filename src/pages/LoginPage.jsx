@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useApp } from '../contexts/AppContext';
 import toast from 'react-hot-toast';
-import { LogIn, Users, Shield, BarChart3, Mail, Lock } from 'lucide-react';
+import { LogIn, Users, Shield, BarChart3, Mail, Lock, Waves } from 'lucide-react';
 
 const LoginPage = () => {
   const navigate = useNavigate();
