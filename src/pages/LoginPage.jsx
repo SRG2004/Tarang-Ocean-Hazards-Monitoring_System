@@ -14,40 +14,40 @@ const LoginPage = () => {
   });
   const [loginLoading, setLoginLoading] = useState(false);
 
-  const demoAccounts = [
-    {
-      type: 'Admin',
-      email: 'admin@oceanhazard.com',
-      description: 'Full system access & management',
-      icon: User,
-      password: 'demo123',
-      color: 'bg-purple-500'
-    },
-    {
-      type: 'Data Analyst',
-      email: 'analyst@oceanhazard.com',
-      description: 'Analytics, reports & social media monitoring',
-      icon: BarChart3,
-      password: 'demo123',
-      color: 'bg-blue-500'
-    },
-    {
-      type: 'Official',
-      email: 'official@oceanhazard.com',
-      description: 'Emergency response & coordination',
-      icon: Shield,
-      password: 'demo123',
-      color: 'bg-red-500'
-    },
-    {
-      type: 'Citizen',
-      email: 'citizen@oceanhazard.com',
-      description: 'Report hazards & receive alerts',
-      icon: Users,
-      password: 'demo123',
-      color: 'bg-green-500'
-    }
-  ];
+const demoAccounts = [
+  {
+    type: 'Admin',
+    email: 'admin@oceanhazard.com',
+    description: 'Full system access & management',
+    icon: User,
+    password: 'demo123',
+    color: 'bg-blue-500'
+  },
+  {
+    type: 'Data Analyst',
+    email: 'analyst@oceanhazard.com',
+    description: 'Analytics, reports & social media monitoring',
+    icon: BarChart3,
+    password: 'demo123',
+    color: 'bg-blue-500'
+  },
+  {
+    type: 'Official',
+    email: 'official@oceanhazard.com',
+    description: 'Emergency response & coordination',
+    icon: Shield,
+    password: 'demo123',
+    color: 'bg-green-500'
+  },
+  {
+    type: 'Citizen',
+    email: 'citizen@oceanhazard.com',
+    description: 'Report hazards & receive alerts',
+    icon: Users,
+    password: 'demo123',
+    color: 'bg-gray-500'
+  }
+];
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -101,11 +101,11 @@ const LoginPage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-white flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-md w-full space-y-8">
         {/* Header */}
         <div className="text-center">
-          <div className="mx-auto h-16 w-16 bg-blue-600 rounded-full flex items-center justify-center">
+          <div className="mx-auto h-16 w-16 bg-blue-500 rounded-full flex items-center justify-center">
             <span className="text-2xl">🌊</span>
           </div>
           <h2 className="mt-6 text-3xl font-extrabold text-gray-900">
@@ -117,7 +117,7 @@ const LoginPage = () => {
         </div>
 
         {/* Login Form */}
-        <div className="bg-white py-8 px-6 shadow-xl rounded-lg border border-gray-200">
+        <div className="bg-white py-8 px-6 shadow-sm rounded-lg border border-gray-200">
           <form className="space-y-6" onSubmit={handleSubmit}>
             <div>
               <label htmlFor="email" className="block text-sm font-medium text-gray-700">
@@ -222,7 +222,7 @@ const LoginPage = () => {
         </div>
 
         {/* Demo Accounts */}
-        <div className="bg-white py-8 px-6 shadow-xl rounded-lg border border-gray-200">
+        <div className="bg-white py-8 px-6 shadow-sm rounded-lg border border-gray-200">
           <div className="text-center">
             <h3 className="text-lg font-semibold text-gray-900">Demo Accounts</h3>
             <p className="mt-2 text-sm text-gray-600">Click any account to login instantly</p>

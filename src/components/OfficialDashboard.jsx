@@ -1,10 +1,9 @@
 import React, { useState } from 'react';
-import { AlertCircle, Filter, Search, Clock, MapPin, Users, Bell, FileText, BarChart3 } from 'lucide-react';
+import { AlertCircle, Filter, Search, Clock, MapPin, Users, Bell, FileText, BarChart3, MessageCircle, Layout, Shield as ShieldIcon, Database } from 'lucide-react';
 import { HazardMap } from './HazardMap';
-import './OfficialDashboard.css'; // Assume CSS file exists or create if needed
+import './OfficialDashboard.css';
 
 const OfficialDashboard = () => {
-  const [activeSection, setActiveSection] = useState('verification');
   const [filters, setFilters] = useState({ region: 'All', status: 'All', time: '24h' });
 
   const stats = {
@@ -26,43 +25,109 @@ const OfficialDashboard = () => {
     { id: 3, title: 'Coastal flooding', status: 'Pending', region: 'Tamil Nadu', time: '6h ago' }
   ];
 
+  const quickActions = [
+    {
+      title: "Social Media",
+      description: "Monitor real-time conversations",
+      icon: MessageCircle,
+      onClick: () => {}, // Placeholder
+      color: "text-blue-500"
+    },
+    {
+      title: "My Dashboard",
+      description: "Personalized overview",
+      icon: Layout,
+      onClick: () => {}, // Already on dashboard
+      color: "text-gray-600"
+    },
+    {
+      title: "Reports",
+      description: "View and manage reports",
+      icon: FileText,
+      onClick: () => {}, // Placeholder
+      color: "text-gray-600"
+    },
+    {
+      title: "Map View",
+      description: "Interactive hazard map",
+      icon: MapPin,
+      onClick: () => {}, // Placeholder
+      color: "text-gray-600"
+    },
+    {
+      title: "Support & Alerts",
+      description: "Notifications and help",
+      icon: Bell,
+      onClick: () => {}, // Placeholder
+      color: "text-red-500"
+    }
+  ];
+
   const handleFilterChange = (key, value) => {
     setFilters(prev => ({ ...prev, [key]: value }));
   };
 
+  const handleIssueAlert = () => {
+    // Placeholder for issue alert functionality
+    console.log('Issue alert clicked');
+  };
+
+  const handleVerifyReports = () => {
+    // Placeholder for verify reports functionality
+    console.log('Verify reports clicked');
+  };
+
+  const handleCoordinateResponse = () => {
+    // Placeholder for coordinate response functionality
+    console.log('Coordinate response clicked');
+  };
+
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Top Navigation */}
-      <nav className="bg-white shadow-sm border-b border-gray-200">
+      {/* Header */}
+      <header className="bg-white shadow-sm border-b border-gray-200">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex space-x-1 py-4">
-            {[
-              { key: 'issue', label: 'Issue Alert', icon: AlertCircle },
-              { key: 'verify', label: 'Verify', icon: CheckCircle },
-              { key: 'coordinate', label: 'Coordinate Response', icon: Users },
-              { key: 'generate', label: 'Generate Report', icon: FileText }
-            ].map((item) => (
-              <button
-                key={item.key}
-                onClick={() => setActiveSection(item.key)}
-                className={`px-4 py-2 text-sm font-medium rounded-md ${
-                  activeSection === item.key
-                    ? 'bg-blue-600 text-white'
-                    : 'text-gray-700 hover:bg-gray-100'
-                } flex items-center space-x-2`}
-              >
-                <item.icon className="h-4 w-4" />
-                <span>{item.label}</span>
+          <div className="flex justify-between items-center py-4">
+            <div className="flex items-center space-x-2">
+              <ShieldIcon className="h-6 w-6 text-green-500" />
+              <span className="text-xl font-semibold text-gray-900">Tarang Official Dashboard</span>
+            </div>
+            <div className="flex items-center space-x-4">
+              <button className="px-3 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200">
+                Official
               </button>
-            ))}
+              <button className="px-3 py-2 text-sm font-medium text-red-600 bg-red-50 rounded-md hover:bg-red-100">
+                Sign Out
+              </button>
+            </div>
           </div>
         </div>
-      </nav>
+      </header>
 
-      {/* Stats Cards */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="text-center mb-8">
+          <h1 className="text-3xl font-bold text-gray-900 mb-2">Official Dashboard</h1>
+          <p className="text-gray-600">Manage resources, coordinate responses, and monitor hazard events</p>
+        </div>
+
+        {/* Quick Actions Row */}
+        <div className="grid grid-cols-1 md:grid-cols-5 gap-4 mb-8">
+          {quickActions.map((action, index) => (
+            <div
+              key={index}
+              className="bg-white rounded-lg shadow-sm p-4 border border-gray-200 hover:shadow-md transition-all duration-200 cursor-pointer flex flex-col items-center text-center"
+              onClick={action.onClick}
+            >
+              <action.icon className={`w-6 h-6 mb-2 ${action.color}`} />
+              <h3 className="text-sm font-medium text-gray-900 mb-1">{action.title}</h3>
+              <p className="text-xs text-gray-500">{action.description}</p>
+            </div>
+          ))}
+        </div>
+
+        {/* Stats Cards */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-          <div className="bg-white rounded-lg shadow-md p-6 border border-gray-200">
+          <div className="bg-white rounded-lg shadow-sm p-6 border border-gray-200">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-gray-600">Pending Verification</p>
@@ -71,16 +136,16 @@ const OfficialDashboard = () => {
               <AlertCircle className="h-8 w-8 text-orange-500" />
             </div>
           </div>
-          <div className="bg-white rounded-lg shadow-md p-6 border border-gray-200">
+          <div className="bg-white rounded-lg shadow-sm p-6 border border-gray-200">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-gray-600">Verified Today</p>
                 <p className="text-3xl font-bold text-green-600">{stats.verifiedToday}</p>
               </div>
-              <CheckCircle className="h-8 w-8 text-green-500" />
+              <AlertCircle className="h-8 w-8 text-green-500" />
             </div>
           </div>
-          <div className="bg-white rounded-lg shadow-md p-6 border border-gray-200">
+          <div className="bg-white rounded-lg shadow-sm p-6 border border-gray-200">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-gray-600">Active Alerts</p>
@@ -89,7 +154,7 @@ const OfficialDashboard = () => {
               <Bell className="h-8 w-8 text-red-500" />
             </div>
           </div>
-          <div className="bg-white rounded-lg shadow-md p-6 border border-gray-200">
+          <div className="bg-white rounded-lg shadow-sm p-6 border border-gray-200">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-gray-600">Alerts Profile</p>
@@ -101,40 +166,49 @@ const OfficialDashboard = () => {
         </div>
 
         {/* Control Panel */}
-        <div className="bg-white rounded-lg shadow-md border border-gray-200 mb-8">
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 mb-8">
           <div className="p-6 border-b border-gray-200">
             <h3 className="text-lg font-semibold text-gray-900">Control Panel</h3>
           </div>
           <div className="p-6 grid grid-cols-1 md:grid-cols-3 gap-4">
-            <button className="bg-red-600 text-white p-4 rounded-lg hover:bg-red-700 flex items-center justify-center space-x-2">
+            <button 
+              onClick={handleIssueAlert}
+              className="bg-red-500 text-white p-4 rounded-lg hover:bg-red-600 flex items-center justify-center space-x-2 transition-colors"
+            >
               <AlertCircle className="h-5 w-5" />
               <span>Issue Alert</span>
             </button>
-            <button className="bg-green-600 text-white p-4 rounded-lg hover:bg-green-700 flex items-center justify-center space-x-2">
-              <CheckCircle className="h-5 w-5" />
+            <button 
+              onClick={handleVerifyReports}
+              className="bg-green-500 text-white p-4 rounded-lg hover:bg-green-600 flex items-center justify-center space-x-2 transition-colors"
+            >
+              <AlertCircle className="h-5 w-5" />
               <span>Verify Reports</span>
             </button>
-            <button className="bg-blue-600 text-white p-4 rounded-lg hover:bg-blue-700 flex items-center justify-center space-x-2">
+            <button 
+              onClick={handleCoordinateResponse}
+              className="bg-blue-500 text-white p-4 rounded-lg hover:bg-blue-600 flex items-center justify-center space-x-2 transition-colors"
+            >
               <Users className="h-5 w-5" />
               <span>Coordinate Response</span>
             </button>
           </div>
         </div>
 
-        {/* Main Content Sections */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Verification Queue */}
-          <div className="lg:col-span-2 bg-white rounded-lg shadow-md border border-gray-200">
+        {/* Main Content Cards */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* Verification Queue Card */}
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200">
             <div className="p-6 border-b border-gray-200 flex items-center justify-between">
               <h3 className="text-lg font-semibold text-gray-900 flex items-center space-x-2">
                 <Filter className="h-5 w-5" />
                 <span>Verification Queue</span>
               </h3>
-              <div className="flex items-center space-x-2">
+              <div className="flex items-center space-x-2 text-sm">
                 <select 
                   value={filters.region} 
                   onChange={(e) => handleFilterChange('region', e.target.value)}
-                  className="border border-gray-300 rounded-md px-2 py-1 text-sm"
+                  className="border border-gray-300 rounded-md px-2 py-1"
                 >
                   <option>All Regions</option>
                   <option>Chennai</option>
@@ -143,20 +217,11 @@ const OfficialDashboard = () => {
                 <select 
                   value={filters.status} 
                   onChange={(e) => handleFilterChange('status', e.target.value)}
-                  className="border border-gray-300 rounded-md px-2 py-1 text-sm"
+                  className="border border-gray-300 rounded-md px-2 py-1"
                 >
                   <option>All Status</option>
                   <option>Pending</option>
                   <option>Unverified</option>
-                </select>
-                <select 
-                  value={filters.time} 
-                  onChange={(e) => handleFilterChange('time', e.target.value)}
-                  className="border border-gray-300 rounded-md px-2 py-1 text-sm"
-                >
-                  <option>24h</option>
-                  <option>48h</option>
-                  <option>7d</option>
                 </select>
               </div>
             </div>
@@ -197,54 +262,85 @@ const OfficialDashboard = () => {
             </div>
           </div>
 
-          {/* Alert Management */}
-          <div className="space-y-6">
-            <div className="bg-white rounded-lg shadow-md border border-gray-200">
-              <div className="p-6 border-b border-gray-200">
-                <h3 className="text-lg font-semibold text-gray-900 flex items-center space-x-2">
-                  <Bell className="h-5 w-5" />
-                  <span>Alert Management</span>
-                </h3>
-              </div>
-              <div className="p-6 space-y-4">
-                {alerts.map((alert, index) => (
-                  <div key={index} className="bg-gray-50 p-4 rounded-lg">
-                    <div className="flex items-center justify-between mb-2">
-                      <h4 className="font-medium text-gray-900">{alert.type}</h4>
-                      <span className={`px-2 py-1 text-xs font-semibold rounded-full ${
-                        alert.severity === 'High' ? 'bg-red-100 text-red-800' : 
-                        alert.severity === 'Medium' ? 'bg-yellow-100 text-yellow-800' : 'bg-green-100 text-green-800'
-                      }`}>
-                        {alert.severity}
-                      </span>
-                    </div>
-                    <p className="text-sm text-gray-600">Locations: {alert.locations}</p>
-                    <p className="text-sm text-gray-600">Status: {alert.status}</p>
-                    <div className="flex space-x-2 mt-3">
-                      <button className="text-blue-600 hover:underline text-sm">Edit</button>
-                      <button className="text-green-600 hover:underline text-sm">Activate</button>
-                      <button className="text-red-600 hover:underline text-sm">Deactivate</button>
-                    </div>
-                  </div>
-                ))}
-              </div>
+          {/* Alert Management Card */}
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200">
+            <div className="p-6 border-b border-gray-200">
+              <h3 className="text-lg font-semibold text-gray-900 flex items-center space-x-2">
+                <Bell className="h-5 w-5" />
+                <span>Alert Management</span>
+              </h3>
             </div>
+            <div className="p-6 space-y-4">
+              {alerts.map((alert, index) => (
+                <div key={index} className="bg-gray-50 p-4 rounded-lg">
+                  <div className="flex items-center justify-between mb-2">
+                    <h4 className="font-medium text-gray-900">{alert.type}</h4>
+                    <span className={`px-2 py-1 text-xs font-semibold rounded-full ${
+                      alert.severity === 'High' ? 'bg-red-100 text-red-800' : 
+                      alert.severity === 'Medium' ? 'bg-yellow-100 text-yellow-800' : 'bg-green-100 text-green-800'
+                    }`}>
+                      {alert.severity}
+                    </span>
+                  </div>
+                  <p className="text-sm text-gray-600">Locations: {alert.locations}</p>
+                  <p className="text-sm text-gray-600">Status: {alert.status}</p>
+                  <div className="flex space-x-2 mt-3">
+                    <button className="text-blue-600 hover:underline text-sm">Edit</button>
+                    <button className="text-green-600 hover:underline text-sm">Activate</button>
+                    <button className="text-red-600 hover:underline text-sm">Deactivate</button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
 
-            {/* Hazard Map Sidebar */}
-            <div className="bg-white rounded-lg shadow-md border border-gray-200">
-              <div className="p-6 border-b border-gray-200">
-                <h3 className="text-lg font-semibold text-gray-900 flex items-center space-x-2">
-                  <MapPin className="h-5 w-5" />
-                  <span>Hazard Map</span>
-                </h3>
+          {/* Resource Allocation Card */}
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200">
+            <div className="p-6 border-b border-gray-200">
+              <h3 className="text-lg font-semibold text-gray-900 flex items-center space-x-2">
+                <Database className="h-5 w-5" />
+                <span>Resource Allocation</span>
+              </h3>
+            </div>
+            <div className="p-6">
+              <div className="space-y-4">
+                <div className="flex justify-between items-center">
+                  <span className="text-sm text-gray-700">Emergency Teams</span>
+                  <span className="text-sm font-medium text-gray-900">12 Active</span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-sm text-gray-700">Medical Units</span>
+                  <span className="text-sm font-medium text-gray-900">8 Deployed</span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-sm text-gray-700">Relief Supplies</span>
+                  <span className="text-sm font-medium text-gray-900">₹2.5L Distributed</span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-sm text-gray-700">Volunteers</span>
+                  <span className="text-sm font-medium text-gray-900">45 On Ground</span>
+                </div>
               </div>
-              <div className="p-6 h-64 overflow-hidden rounded-b-lg">
-                <HazardMap />
-              </div>
+              <button className="mt-4 w-full bg-blue-500 text-white py-2 px-4 rounded-md hover:bg-blue-600 text-sm font-medium">
+                Manage Resources
+              </button>
+            </div>
+          </div>
+
+          {/* Hazard Map Card */}
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200 col-span-1 lg:col-span-2">
+            <div className="p-6 border-b border-gray-200">
+              <h3 className="text-lg font-semibold text-gray-900 flex items-center space-x-2">
+                <MapPin className="h-5 w-5" />
+                <span>Hazard Map</span>
+              </h3>
+            </div>
+            <div className="p-6">
+              <HazardMap />
             </div>
           </div>
         </div>
-      </div>
+      </main>
     </div>
   );
 };
