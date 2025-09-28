@@ -12,7 +12,7 @@ const PERPLEXITY_BASE_URL = 'https://api.perplexity.ai';
 const GEMINI_BASE_URL = 'https://generativelanguage.googleapis.com/v1beta';
 
 // Model names
-const PERPLEXITY_MODEL = 'llama-3.1-sonar-small-128k-online';
+const PERPLEXITY_MODEL = 'sonar-pro';
 const GEMINI_MODEL = 'gemini-1.5-pro';
 
 // Rate limiting: 60 requests per minute for Perplexity, 15 for Gemini

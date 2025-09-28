@@ -7,7 +7,7 @@
    - Get fresh keys if yours are invalid
 
 2. **Update model names**:
-   - Perplexity: `llama-3.1-sonar-small-128k-online`
+   - Perplexity: `sonar-pro`
    - Gemini: `gemini-1.5-pro` (not `gemini-1.5-pro-latest`)
 
 3. **Create Firebase indexes** by clicking the console links in your error messages
