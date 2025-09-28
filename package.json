@@ -20,6 +20,7 @@
     "@capacitor/ios": "^5.0.0",
     "@react-google-maps/api": "^2.17.0",
     "axios": "^1.12.2",
+    "axios-rate-limit": "^1.4.0",
     "clsx": "^2.1.1",
     "dotenv": "^17.2.2",
     "firebase": "^9.22.2",
