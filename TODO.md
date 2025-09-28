@@ -1,51 +1,99 @@
-# Tarang Ocean Hazards Monitoring System - TODO
+# Exact UI Implementation Plan - Tarang Ocean Hazards Monitoring System
 
-## Completed Tasks
-- [x] Resolve API configuration issues for AI services (Perplexity and Gemini)
-  - [x] Update API keys validation (Perplexity: pplx-, Gemini: gemini-1.5-pro)
-  - [x] Update model names (Perplexity: llama-3.1-sonar-small-128k-online)
-  - [x] Add proper error handling, rate limiting, timeout management
-  - [x] Add health check methods
-  - [x] Create AI_INTEGRATION_GUIDE.md troubleshooting guide
-- [x] Create test-ai-config.js for configuration testing (tested successfully - detects missing API keys and server status)
-- [x] Implement role-based access system
-  - [x] Update auth routes to include role in JWT
-  - [x] Create role middleware (authenticateToken, authorizeRoles)
-  - [x] Update AuthContext for backend login, token storage, logout, role access
-  - [x] Update AppRouter for role-based routing (/citizen/*, /official/*, /analyst/*)
-  - [x] Create OfficialDashboard.jsx (verification queue, social trends, filters)
-  - [x] Create AnalystDashboard.jsx (analytics, charts, sentiment analysis, top locations)
-- [x] Create frontend services for backend integration
-  - [x] Create hazardService.js (create/get/update reports)
-  - [x] Create volunteerService.js (register/profile/tasks)
-  - [x] Create donationService.js (create/get donations)
-- [x] Update .gitignore with comprehensive Node.js/React patterns
-- [x] Resolve GitHub push protection issues
-  - [x] Remove .env from git history (reset to clean commit)
-  - [x] Push changes successfully to main branch
+## Overview
+Implementing the exact UI from provided Figma screenshots. All pages, components, layouts, colors, and interactions will match the design precisely. Using React, Tailwind CSS, shadcn/ui, Lucide icons.
 
-## UI Update Tasks (to match provided screenshots)
-- [ ] Update Navbar.jsx: Replace ul with modern sidebar nav using Tailwind (flex col, icons from lucide-react, active states). Add tabs: Home, Reports, Volunteer, Alerts, Profile based on role.
-- [ ] Update CitizenDashboard.jsx: Update to grid layout with header, stats cards (Reports:23, Verified:19, Alerts:12), recent alerts section (cards with types like Storm Surge), integrated report form button opening modal matching screenshot.
-- [ ] Update OfficialDashboard.jsx: Update to include top controls (Issue Alert, Verify buttons), verification queue table (columns: Report, Status, Actions), filters (region, status, time), alert management cards (Storm Surge, High Wave).
-- [ ] Update AnalystDashboard.jsx: Add social intelligence section with charts (posts:318, mentions:47), trending topics table, sentiment pie chart using recharts.
-- [ ] Update/Create CreateReportForm.jsx: Form with exact fields (Hazard Type dropdown: Storm Surge/Coastal Flooding/etc., Location: lat/lng inputs + use current location button, Description textarea, Image upload (multiple), Time Observed, Submit).
-- [ ] Update/Create VolunteerRegistrationForm.jsx: Form with fields (Full Name, Email, Phone, City, Experience textarea, Submit).
-- [ ] Update AppRouter.jsx: Ensure routes match screenshots (/citizen, /official, /analyst with subpaths for reports/map/etc.).
-- [ ] Update CSS files (Navbar.css, CitizenDashboard.css): Add Tailwind overrides if needed.
-- [ ] Test UI in browser (launch dev server, navigate roles, interact forms).
-- [ ] Commit UI updates to git.
-- [ ] Run test-ai-config.js to ensure no regression on API config.
+## Steps to Complete
 
-## Pending Tasks
-- [ ] Test role-based routing and dashboards
-- [ ] Test AI service integration with updated configurations
-- [ ] Test frontend-backend API calls
-- [ ] Create Firebase indexes if needed
-- [ ] Deploy and verify in production environment
+### 1. **Update Global Styles** [ ]
+   - File: `src/styles/globals.css`
+   - Add CSS variables for colors: `--primary: #2563eb; --secondary: #f1f5f9; --success: #10b981; --danger: #ef4444; --background: #f8fafc;`
+   - Set base font: Inter via @import.
+   - Define base card styles: `.card { @apply rounded-xl shadow-sm border border-gray-200 bg-white; }`
+   - Add gradient background for role selection: `--gradient-background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);`
 
-## Notes
-- Server is running correctly, API config issues resolved
-- Role-based access implemented with secure routing
-- Comprehensive .gitignore prevents tracking sensitive files
-- All changes pushed to main branch successfully
+### 2. **Update Navbar Component** [ ]
+   - File: `src/components/Navbar.jsx`
+   - Create role-aware navbar: Logo "Tarang" left, dynamic menu items based on role (Citizen: Home/Report/Alerts/Profile; Official/Analyst: Issue/Verify/Generate Report/Notification/Social/Profile).
+   - Add profile dropdown with avatar, name, logout.
+   - Use AppContext for role/user state.
+   - Style: Fixed top bar, blue background, white text, hover effects.
+
+### 3. **Update Login Page** [ ]
+   - File: `src/pages/LoginPage.jsx`
+   - Centered form: Email/Password inputs with labels.
+   - "Demo Accounts" section with 3 buttons (Citizen/Official/Analyst) that auto-login and redirect.
+   - Bottom links: "Forgot Password?" and "Sign Up".
+   - Style: White card on light blue gradient background, primary blue button.
+
+### 4. **Refine Role Selection Page** [ ]
+   - File: `src/pages/RoleSelectionPage.jsx`
+   - Header: Waves icon + "Tarang" title, subtitle "Ocean Hazards Monitoring System — INCOIS".
+   - Three cards: Citizen (blue), Official (green), Analyst (purple) with icons, titles, descriptions.
+   - No quick actions row; simple click to navigate to login/:role.
+   - Background: Light gradient.
+
+### 5. **Update Citizen Dashboard** [ ]
+   - File: `src/components/CitizenDashboard.jsx`
+   - Top navbar.
+   - Stats row: Cards for Reports (23), Alerts (19), Community (12).
+   - Quick actions: "Report Hazard" and "Join Network" buttons.
+   - Recent Reports table with columns (Type, Location, Status).
+   - Alerts section: High/Medium/Low cards.
+   - Community Feed: Cards with updates (e.g., "Beach cleanup on Marina Beach").
+
+### 6. **Update Create Report Form** [ ]
+   - File: `src/components/CreateReportForm.jsx`
+   - Form fields: Hazard Type dropdown, Location (text + lat/long inputs), Description textarea.
+   - Submit button, validation.
+   - Integrate with hazardService.js for submission.
+   - Style as modal or full page matching screenshot.
+
+### 7. **Update Volunteer Registration Form** [ ]
+   - File: `src/components/VolunteerRegistrationForm.jsx`
+   - Fields: Name, Email, Phone, Address.
+   - Checkbox for terms, submit button.
+   - Integrate with volunteerService.js.
+
+### 8. **Update Official Dashboard** [ ]
+   - File: `src/components/OfficialDashboard.jsx`
+   - Navbar with role-specific items.
+   - Verification Center: Stats cards (Pending 47, Verified 23, Active 8, Alerts 15).
+   - Control Panel: Buttons (Issue Alert, Verify, Coordinate Response).
+   - Pending Reports table.
+   - Alerts sidebar with filters (Region, Status, Time Range).
+
+### 9. **Update Analyst Dashboard** [ ]
+   - File: `src/components/AnalystDashboard.jsx`
+   - Navbar same as official.
+   - Social Intelligence section: Stats (Posts 3.2K, High Risk 47, Engagement 7.3%, Active Hashtags 23).
+   - Filters: Social Media, Region, Time Range.
+   - Trending Topics list with hashtags.
+
+### 10. **Add/Edit Profile Pages** [ ]
+   - Files: Create src/components/Profile.jsx (reusable), customize per role.
+   - Citizen: Personal info form.
+   - Official/Analyst: Personal + Professional details (Organization, Role, Experience).
+   - Save button, integrate with auth context.
+
+### 11. **Additional Pages** [ ]
+   - Badges page: Achievement cards (First Report, Community Guardian, etc.).
+   - Settings page: Notification toggles, privacy options.
+   - Routes: Add to src/AppRouter.jsx (/profile/:role, /badges, /settings).
+
+### 12. **Testing & Verification** [ ]
+   - Run `npm run dev`.
+   - Test critical path: Role select → Login → Dashboard → Form submit → Profile.
+   - Thorough: Responsive, all interactions, ARIA labels.
+   - Use browser_action to screenshot and compare.
+
+### 13. **Commit & PR** [ ]
+   - Create branch `blackboxai/exact-ui-implementation`.
+   - Commit all changes.
+   - Push and create PR with detailed description.
+
+## Progress Tracking
+- Mark [x] when complete.
+- Update after each major step.
+
+Current Status: Starting implementation.

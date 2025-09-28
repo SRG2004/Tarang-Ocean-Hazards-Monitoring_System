@@ -1,53 +1,47 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { useApp } from '../contexts/AppContext';
 import toast from 'react-hot-toast';
-import { LogIn, User, Shield, BarChart3, Users, Eye } from 'lucide-react';
+import { LogIn, Users, Shield, BarChart3, Mail, Lock } from 'lucide-react';
 
 const LoginPage = () => {
   const navigate = useNavigate();
   const { login, loading } = useApp();
   const [formData, setFormData] = useState({
     email: '',
-    password: '',
-    rememberMe: false
+    password: ''
   });
   const [loginLoading, setLoginLoading] = useState(false);
 
-const demoAccounts = [
-  {
-    type: 'Admin',
-    email: 'admin@oceanhazard.com',
-    description: 'Full system access & management',
-    icon: User,
-    password: 'demo123',
-    color: 'bg-blue-500'
-  },
-  {
-    type: 'Data Analyst',
-    email: 'analyst@oceanhazard.com',
-    description: 'Analytics, reports & social media monitoring',
-    icon: BarChart3,
-    password: 'demo123',
-    color: 'bg-blue-500'
-  },
-  {
-    type: 'Official',
-    email: 'official@oceanhazard.com',
-    description: 'Emergency response & coordination',
-    icon: Shield,
-    password: 'demo123',
-    color: 'bg-green-500'
-  },
-  {
-    type: 'Citizen',
-    email: 'citizen@oceanhazard.com',
-    description: 'Report hazards & receive alerts',
-    icon: Users,
-    password: 'demo123',
-    color: 'bg-gray-500'
-  }
-];
+  const demoAccounts = [
+    {
+      type: 'Citizen',
+      email: 'citizen@tarang.com',
+      role: 'citizen',
+      description: 'Report hazards and receive alerts',
+      icon: Users,
+      password: 'demo123',
+      color: 'bg-primary'
+    },
+    {
+      type: 'Official',
+      email: 'official@tarang.com',
+      role: 'official',
+      description: 'Manage responses and coordinate teams',
+      icon: Shield,
+      password: 'demo123',
+      color: 'bg-success'
+    },
+    {
+      type: 'Analyst',
+      email: 'analyst@tarang.com',
+      role: 'analyst',
+      description: 'Analyze data and monitor trends',
+      icon: BarChart3,
+      password: 'demo123',
+      color: 'bg-violet-500'
+    }
+  ];
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -60,10 +54,8 @@ const demoAccounts = [
     setLoginLoading(true);
     try {
       await login(formData.email, formData.password);
-
-      navigate('/');
-
-      toast.success(`Login successful!`);
+      navigate('/role-selection');
+      toast.success('Login successful!');
     } catch (error) {
       toast.error(error.message || 'Login failed');
     } finally {
@@ -72,58 +64,60 @@ const demoAccounts = [
   };
 
   const handleInputChange = (e) => {
-    const { name, value, type, checked } = e.target;
+    const { name, value } = e.target;
     setFormData(prev => ({
       ...prev,
-      [name]: type === 'checkbox' ? checked : value
+      [name]: value
     }));
   };
 
   const handleDemoLogin = async (account) => {
     setFormData({
       email: account.email,
-      password: account.password,
-      rememberMe: false
+      password: account.password
     });
 
     setLoginLoading(true);
     try {
       await login(account.email, account.password);
-
-      navigate('/');
-
+      // Set role in context if needed, but assuming login handles it
+      navigate(`/${account.role}/dashboard`);
       toast.success(`Logged in as ${account.type}`);
     } catch (error) {
-      toast.error(error.message);
+      toast.error(error.message || 'Demo login failed');
     } finally {
       setLoginLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-white flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
+    <div 
+      className="min-h-screen flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8" 
+      style={{ background: 'var(--gradient-role)' }}
+    >
       <div className="max-w-md w-full space-y-8">
         {/* Header */}
         <div className="text-center">
-          <div className="mx-auto h-16 w-16 bg-blue-500 rounded-full flex items-center justify-center">
-            <span className="text-2xl">🌊</span>
+          <div className="mx-auto h-16 w-16 bg-primary rounded-full flex items-center justify-center">
+            <Waves className="h-8 w-8 text-white" />
           </div>
-          <h2 className="mt-6 text-3xl font-extrabold text-gray-900">
-            Welcome to Tarang
+          <h2 className="mt-6 text-3xl font-bold text-text-primary">
+            Sign in to your account
           </h2>
-          <p className="mt-2 text-sm text-gray-600">
+          <p className="mt-2 text-sm text-text-secondary">
             Ocean Hazards Monitoring System
           </p>
         </div>
 
-        {/* Login Form */}
-        <div className="bg-white py-8 px-6 shadow-sm rounded-lg border border-gray-200">
+        {/* Login Form Card */}
+        <div className="card p-6 sm:p-8">
           <form className="space-y-6" onSubmit={handleSubmit}>
             <div>
-              <label htmlFor="email" className="block text-sm font-medium text-gray-700">
-                Email Address
+              <label htmlFor="email" className="block text-sm font-medium text-text-primary mb-2">
+                Email address
               </label>
-              <div className="mt-1">
+              <div className="relative">
+                <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-text-secondary" />
                 <input
                   id="email"
                   name="email"
@@ -132,17 +126,18 @@ const demoAccounts = [
                   required
                   value={formData.email}
                   onChange={handleInputChange}
-                  className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                  className="input pl-10 w-full"
                   placeholder="Enter your email"
                 />
               </div>
             </div>
 
             <div>
-              <label htmlFor="password" className="block text-sm font-medium text-gray-700">
+              <label htmlFor="password" className="block text-sm font-medium text-text-primary mb-2">
                 Password
               </label>
-              <div className="mt-1">
+              <div className="relative">
+                <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-text-secondary" />
                 <input
                   id="password"
                   name="password"
@@ -151,99 +146,60 @@ const demoAccounts = [
                   required
                   value={formData.password}
                   onChange={handleInputChange}
-                  className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                  className="input pl-10 w-full"
                   placeholder="Enter your password"
                 />
               </div>
             </div>
 
-            <div className="flex items-center justify-between">
-              <div className="flex items-center">
-                <input
-                  id="rememberMe"
-                  name="rememberMe"
-                  type="checkbox"
-                  checked={formData.rememberMe}
-                  onChange={handleInputChange}
-                  className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-                />
-                <label htmlFor="rememberMe" className="ml-2 block text-sm text-gray-900">
-                  Remember me
-                </label>
-              </div>
-
-              <div className="text-sm">
-                <a href="#" className="font-medium text-blue-600 hover:text-blue-500">
-                  Forgot your password?
-                </a>
-              </div>
+            <div className="flex justify-between text-sm">
+              <Link to="/forgot-password" className="font-medium text-primary hover:text-primary/80">
+                Forgot your password?
+              </Link>
+              <Link to="/register" className="font-medium text-primary hover:text-primary/80">
+                Sign up
+              </Link>
             </div>
 
             <div>
               <button
                 type="submit"
                 disabled={loginLoading || loading}
-                className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="btn-primary w-full disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                <span className="absolute left-0 inset-y-0 flex items-center pl-3">
-                  <LogIn className="h-5 w-5 text-blue-500 group-hover:text-blue-400" />
+                <span className="flex items-center justify-center space-x-2">
+                  <LogIn className="h-4 w-4" />
+                  <span>{loginLoading || loading ? 'Signing In...' : 'Sign In'}</span>
                 </span>
-                {loginLoading || loading ? 'Signing In...' : 'Sign In'}
               </button>
             </div>
           </form>
-
-          {/* Divider */}
-          <div className="mt-6">
-            <div className="relative">
-              <div className="absolute inset-0 flex items-center">
-                <div className="w-full border-t border-gray-300" />
-              </div>
-              <div className="relative flex justify-center text-sm">
-                <span className="px-2 bg-white text-gray-500">Don't have an account?</span>
-              </div>
-            </div>
-
-            <div className="mt-6 grid grid-cols-1 gap-3">
-              <button
-                onClick={() => navigate('/register')}
-                className="w-full inline-flex justify-center py-2 px-4 border border-gray-300 rounded-md shadow-sm bg-white text-sm font-medium text-gray-500 hover:bg-gray-50"
-              >
-                Create General Account
-              </button>
-              <button
-                onClick={() => navigate('/volunteer-registration')}
-                className="w-full inline-flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm bg-green-600 text-sm font-medium text-white hover:bg-green-700"
-              >
-                Register as Volunteer
-              </button>
-            </div>
-          </div>
         </div>
 
-        {/* Demo Accounts */}
-        <div className="bg-white py-8 px-6 shadow-sm rounded-lg border border-gray-200">
-          <div className="text-center">
-            <h3 className="text-lg font-semibold text-gray-900">Demo Accounts</h3>
-            <p className="mt-2 text-sm text-gray-600">Click any account to login instantly</p>
+        {/* Demo Accounts Card */}
+        <div className="card p-6">
+          <div className="text-center mb-6">
+            <h3 className="text-lg font-semibold text-text-primary">Demo Accounts</h3>
+            <p className="mt-1 text-sm text-text-secondary">Click to login instantly with demo credentials</p>
           </div>
 
-          <div className="mt-6 grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 gap-3">
             {demoAccounts.map((account) => (
               <button
                 key={account.type}
                 onClick={() => handleDemoLogin(account)}
                 disabled={loginLoading || loading}
-                className="group relative bg-white p-4 border border-gray-200 rounded-lg hover:border-gray-300 hover:shadow-md transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="card p-4 hover:shadow-md transition-all duration-200 flex items-center space-x-3 disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                <div className="flex flex-col items-center space-y-2">
-                  <div className={`p-2 rounded-full ${account.color} text-white`}>
-                    <account.icon className="h-5 w-5" />
-                  </div>
-                  <div className="text-center">
-                    <div className="text-sm font-medium text-gray-900">{account.type}</div>
-                    <div className="text-xs text-gray-500 mt-1">{account.description}</div>
-                  </div>
+                <div className={`p-2 rounded-full ${account.color} text-white flex-shrink-0`}>
+                  <account.icon className="h-5 w-5" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="text-sm font-medium text-text-primary truncate">{account.type}</div>
+                  <div className="text-xs text-text-secondary truncate">{account.description}</div>
+                </div>
+                <div className="text-xs text-text-secondary font-mono bg-secondary/50 px-2 py-1 rounded">
+                  {account.email}
                 </div>
               </button>
             ))}
