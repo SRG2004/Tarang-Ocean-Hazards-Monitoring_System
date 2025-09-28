@@ -1,273 +1,61 @@
 import axios from 'axios';
+import { useContext } from 'react';
+import { AuthContext } from '../contexts/AuthContext';
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || '/api';
+const API_BASE = 'http://localhost:3000/api';
+
+const api = axios.create({
+  baseURL: API_BASE,
+  headers: {
+    'Content-Type': 'application/json',
+  },
+});
+
+// Add auth token to requests
+api.interceptors.request.use((config) => {
+  const { token } = useContext(AuthContext);
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+  return config;
+});
 
 export const volunteerService = {
-  // Get auth headers
-  getAuthHeaders() {
-    const token = localStorage.getItem('authToken');
-    return token ? { Authorization: `Bearer ${token}` } : {};
+  registerVolunteer: async (volunteerData) => {
+    const response = await api.post('/volunteers/register', volunteerData);
+    return response.data;
   },
 
-  // Register volunteer
-  async registerVolunteer(volunteerData) {
-    try {
-      const response = await axios.post(`${API_BASE_URL}/volunteers/register`, volunteerData, {
-        headers: this.getAuthHeaders()
-      });
-
-      return {
-        success: true,
-        volunteerId: response.data.volunteer.id,
-        data: response.data.volunteer
-      };
-    } catch (error) {
-      console.error('Error registering volunteer:', error);
-      throw new Error(error.response?.data?.error || 'Failed to register volunteer');
-    }
+  getVolunteers: async (filters = {}) => {
+    const params = new URLSearchParams(filters);
+    const response = await api.get(`/volunteers?${params}`);
+    return response.data;
   },
 
-  // Get volunteers
-  async getVolunteers(filters = {}) {
-    try {
-      const params = new URLSearchParams();
-
-      // Add filters to query params
-      Object.keys(filters).forEach(key => {
-        if (filters[key] !== undefined && filters[key] !== null) {
-          params.append(key, filters[key]);
-        }
-      });
-
-      const response = await axios.get(`${API_BASE_URL}/volunteers?${params}`, {
-        headers: this.getAuthHeaders()
-      });
-
-      return response.data.volunteers || [];
-    } catch (error) {
-      console.error('Error getting volunteers:', error);
-      throw new Error(error.response?.data?.error || 'Failed to get volunteers');
-    }
+  getUserProfile: async (userId) => {
+    const response = await api.get(`/volunteers/user/${userId}`);
+    return response.data;
   },
 
-  // Get specific volunteer
-  async getVolunteer(volunteerId) {
-    try {
-      const response = await axios.get(`${API_BASE_URL}/volunteers/${volunteerId}`, {
-        headers: this.getAuthHeaders()
-      });
-
-      return response.data.volunteer;
-    } catch (error) {
-      console.error('Error getting volunteer:', error);
-      throw new Error(error.response?.data?.error || 'Failed to get volunteer');
-    }
+  updateProfile: async (userId, updates) => {
+    const response = await api.patch(`/volunteers/${userId}`, updates);
+    return response.data;
   },
 
-  // Create task
-  async createTask(taskData) {
-    try {
-      const response = await axios.post(`${API_BASE_URL}/volunteers/tasks`, taskData, {
-        headers: this.getAuthHeaders()
-      });
-
-      return {
-        success: true,
-        taskId: response.data.task.id,
-        data: response.data.task
-      };
-    } catch (error) {
-      console.error('Error creating task:', error);
-      throw new Error(error.response?.data?.error || 'Failed to create task');
-    }
+  getTasks: async () => {
+    const response = await api.get('/volunteers/tasks');
+    return response.data;
   },
 
-  // Get tasks
-  async getTasks(filters = {}) {
-    try {
-      const params = new URLSearchParams();
-
-      // Add filters to query params
-      Object.keys(filters).forEach(key => {
-        if (filters[key] !== undefined && filters[key] !== null) {
-          params.append(key, filters[key]);
-        }
-      });
-
-      const response = await axios.get(`${API_BASE_URL}/volunteers/tasks?${params}`, {
-        headers: this.getAuthHeaders()
-      });
-
-      return response.data.tasks || [];
-    } catch (error) {
-      console.error('Error getting tasks:', error);
-      throw new Error(error.response?.data?.error || 'Failed to get tasks');
-    }
+  assignTask: async (taskId, volunteerId) => {
+    const response = await api.post(`/volunteers/tasks/${taskId}/assign`, { volunteerId });
+    return response.data;
   },
 
-  // Get specific task
-  async getTask(taskId) {
-    try {
-      const response = await axios.get(`${API_BASE_URL}/volunteers/tasks/${taskId}`, {
-        headers: this.getAuthHeaders()
-      });
-
-      return response.data.task;
-    } catch (error) {
-      console.error('Error getting task:', error);
-      throw new Error(error.response?.data?.error || 'Failed to get task');
-    }
+  completeTask: async (taskId) => {
+    const response = await api.patch(`/volunteers/tasks/${taskId}/complete`);
+    return response.data;
   },
-
-  // Assign task to volunteer
-  async assignTask(taskId, volunteerId) {
-    try {
-      const response = await axios.post(`${API_BASE_URL}/volunteers/tasks/${taskId}/assign`, {
-        volunteerId
-      }, {
-        headers: this.getAuthHeaders()
-      });
-
-      return {
-        success: true,
-        message: response.data.message
-      };
-    } catch (error) {
-      console.error('Error assigning task:', error);
-      throw new Error(error.response?.data?.error || 'Failed to assign task');
-    }
-  },
-
-  // Complete task
-  async completeTask(taskId, completionData = {}) {
-    try {
-      const response = await axios.post(`${API_BASE_URL}/volunteers/tasks/${taskId}/complete`, completionData, {
-        headers: this.getAuthHeaders()
-      });
-
-      return {
-        success: true,
-        message: response.data.message
-      };
-    } catch (error) {
-      console.error('Error completing task:', error);
-      throw new Error(error.response?.data?.error || 'Failed to complete task');
-    }
-  },
-
-  // Update volunteer profile
-  async updateVolunteer(volunteerId, updateData) {
-    try {
-      const response = await axios.put(`${API_BASE_URL}/volunteers/${volunteerId}`, updateData, {
-        headers: this.getAuthHeaders()
-      });
-
-      return {
-        success: true,
-        message: response.data.message,
-        data: response.data.volunteer
-      };
-    } catch (error) {
-      console.error('Error updating volunteer:', error);
-      throw new Error(error.response?.data?.error || 'Failed to update volunteer');
-    }
-  },
-
-  // Get volunteer statistics
-  async getVolunteerStats() {
-    try {
-      const response = await axios.get(`${API_BASE_URL}/volunteers/stats`, {
-        headers: this.getAuthHeaders()
-      });
-
-      return response.data.stats || {
-        totalVolunteers: 0,
-        activeVolunteers: 0,
-        pendingVerification: 0,
-        totalTasks: 0,
-        openTasks: 0,
-        assignedTasks: 0,
-        completedTasks: 0,
-        availabilityBreakdown: { weekends: 0, weekdays: 0, fullTime: 0, emergency: 0 }
-      };
-    } catch (error) {
-      console.error('Error getting volunteer stats:', error);
-      return {
-        totalVolunteers: 0,
-        activeVolunteers: 0,
-        pendingVerification: 0,
-        totalTasks: 0,
-        openTasks: 0,
-        assignedTasks: 0,
-        completedTasks: 0,
-        availabilityBreakdown: { weekends: 0, weekdays: 0, fullTime: 0, emergency: 0 }
-      };
-    }
-  },
-
-  // Find suitable volunteers for a task
-  async findSuitableVolunteers(taskData) {
-    try {
-      const response = await axios.post(`${API_BASE_URL}/volunteers/find-suitable`, taskData, {
-        headers: this.getAuthHeaders()
-      });
-
-      return response.data.volunteers || [];
-    } catch (error) {
-      console.error('Error finding suitable volunteers:', error);
-      throw new Error(error.response?.data?.error || 'Failed to find suitable volunteers');
-    }
-  },
-
-  // Get volunteer availability options
-  getAvailabilityOptions() {
-    return [
-      { value: 'weekends', label: 'Weekends Only' },
-      { value: 'weekdays', label: 'Weekdays Only' },
-      { value: 'fullTime', label: 'Full Time' },
-      { value: 'emergency', label: 'Emergency Only' },
-      { value: 'flexible', label: 'Flexible' }
-    ];
-  },
-
-  // Get volunteer skills options
-  getSkillsOptions() {
-    return [
-      'First Aid',
-      'Search & Rescue',
-      'Communication',
-      'Logistics',
-      'Medical Support',
-      'Technical Support',
-      'Translation',
-      'Driving',
-      'Boating',
-      'Cooking',
-      'Counseling',
-      'Photography',
-      'Writing',
-      'Data Entry'
-    ];
-  },
-
-  // Get task priority options
-  getTaskPriorityOptions() {
-    return [
-      { value: 'low', label: 'Low Priority' },
-      { value: 'medium', label: 'Medium Priority' },
-      { value: 'high', label: 'High Priority' },
-      { value: 'critical', label: 'Critical Priority' }
-    ];
-  },
-
-  // Get task status options
-  getTaskStatusOptions() {
-    return [
-      { value: 'open', label: 'Open' },
-      { value: 'assigned', label: 'Assigned' },
-      { value: 'in_progress', label: 'In Progress' },
-      { value: 'completed', label: 'Completed' },
-      { value: 'cancelled', label: 'Cancelled' }
-    ];
-  }
 };
+
+export default volunteerService;
