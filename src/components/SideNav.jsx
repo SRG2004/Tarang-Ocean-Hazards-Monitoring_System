@@ -1,7 +1,8 @@
 import React from "react";
 import { NavLink, Link } from "react-router-dom";
-import { Settings, Waves, Home, Map, Briefcase, DollarSign, BarChart, Users } from "lucide-react";
+import { Settings, Waves, Home, Map, Briefcase, DollarSign, BarChart, Users, AlertCircle, Phone } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "../components/ui/avatar";
+import MinimalHazardMap from "./MinimalHazardMap";
 
 const navItems = {
   citizen: [
@@ -35,6 +36,14 @@ const SideNav = ({ userRole, user }) => {
     ? (userRole || user?.role)
     : "citizen";
   const items = navItems[roleKey] ?? [];
+
+  // Mock data - in a real app, this would come from props or context
+  const nearbyAlerts = [];
+  const recentActivity = [
+    { description: "High waves reported in Marina Beach", time: "2h ago" },
+    { description: "Storm surge warning issued", time: "4h ago" },
+    { description: "Coastal flooding alert", time: "6h ago" }
+  ];
 
   return (
     <aside className={cn("w-64 p-4 sm:p-5 md:p-6 nav-surface text-slate-100 flex flex-col min-h-screen", `nav-surface--${roleKey}`)}>

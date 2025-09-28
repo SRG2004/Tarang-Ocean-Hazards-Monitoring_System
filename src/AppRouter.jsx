@@ -2,7 +2,7 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-d
 import { useAuth } from "./contexts/AuthContext";
 import RoleSelectionPage from "./pages/RoleSelectionPage";
 import LoginPage from "./pages/LoginPage";
-// ...existing imports...
+import MainLayout from "./components/MainLayout";
 // import dashboards etc.
 
 export default function AppRouter() {
