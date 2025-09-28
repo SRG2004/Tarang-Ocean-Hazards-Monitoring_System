@@ -12,6 +12,16 @@ Preferred communication style: Simple, everyday language.
 
 ## Recent Changes
 
+### September 28, 2025
+- **Configuration Revert**: Reverted deployment configurations to stable state (September 23, 2025)
+  - Fixed TailwindCSS compatibility issues by downgrading from v4.1.13 to v3.3.0
+  - Restored stable PostCSS configuration for production builds
+  - Corrected server port configurations: Frontend (port 5000), Backend (port 3001)
+  - Fixed Vercel proxy configuration for API routing
+  - Added missing dependencies (class-variance-authority, tailwindcss-animate)
+- **Build Status**: Successfully building and running in development mode
+- **Deployment Target**: Reverted to deployment time "23 Sept 2025, 18:26:41 GMT+5:30"
+
 ### September 27, 2025
 - **Complete GitHub Import Setup**: Successfully imported and configured the Taranga Ocean Hazard Monitor project for Replit environment
 - **Dependencies**: Installed all npm dependencies including React and TypeScript type definitions
